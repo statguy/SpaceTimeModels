@@ -72,7 +72,7 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
         private$offset <- offset[completeIndex] / private$offsetScale
       }
       
-      private$time <- time[completeIndex] # TODO: scale time (for continuous)?
+      private$time <- time[completeIndex]
       private$response <- response[completeIndex]
       if (!missing(covariates))
         private$covariates <- covariates[completeIndex,]
@@ -236,7 +236,7 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
       return(inla.spde2.result(private$result, "spatial", private$spde))
     },
     
-    summarySpatial = function() {
+    summarySpatialParameters = function() {
       spdeResult <- self$getSPDEResult()
       range <- SpaceTime::summaryINLAParameter(spdeResult$marginals.range.nominal[[1]], coordsScale=private$coordsScale)
       variance <- SpaceTime::summaryINLAParameter(spdeResult$marginals.variance.nominal[[1]])
@@ -253,6 +253,36 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
         stop("The model has not been estimated.")
       print(summary(private$result))
       return(invisible(self))
+    },
+    
+    getFitted = function() {
+      indexObserved <- inla.stack.index(private$fullStack, "obs")$data
+      fitted <- private$result$summary.fitted.values$mean[indexObserved] * private$offsetScale
+      return(fitted)      
+    },
+    
+    summaryTemporalVariation = function() {
+      observed <- private$response / private$offset * private$offsetScale
+      fitted <- self$getFitted()
+      x <- data.frame(time=private$time, observed=observed, fitted=fitted)
+      x <- ddply(x, .(time), function(x) data.frame(observed=sum(x$observed), fitted=sum(x$fitted)))
+      print(x)
+      return(invisible(self))
+    },
+    
+    plotTemporalVariation = function() {
+      observed <- private$response / private$offset * private$offsetScale
+      fitted <- self$getFitted()      
+      x <- data.frame(time=private$time, observed=observed, fitted=fitted)
+      x <- ddply(x, .(time), function(x) data.frame(observed=sum(x$observed), fitted=sum(x$fitted)))
+      x <- melt(x, id.vars="time", measure.vars=c("observed", "fitted"))
+      p <- ggplot(x, aes(time, value, colour=variable)) + geom_line()
+      print(p)
+      return(invisible(self))
+    },
+    
+    plotSpatialVariation = function(timeIndex) {
+      
     }
   )
 )
