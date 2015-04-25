@@ -9,6 +9,29 @@ nullScale <- function(x, y) {
   return(x / y)
 }
 
+#' @export getINLAModelMatrix
+#' @keywords internal
+getINLAModelMatrix = function(covariatesModel, covariates) {
+  x <- if (missing(covariates) || is.null(covariates)) terms(covariatesModel)
+  else terms(covariatesModel, data=covariates)
+  
+  if (length(attr(x, "term.labels")) > 0) {
+    if (missing(covariates) || is.null(covariates))
+      stop("Covariates data do not match with covariates model.")
+    
+    modelMatrix <- as.data.frame(model.matrix(covariatesModel, data=covariates))
+    terms <- colnames(modelMatrix)
+    interceptIndex <- terms %in% "(Intercept)"
+    if (any(interceptIndex)) {
+      terms <- terms[!interceptIndex]
+      modelMatrix <- modelMatrix[,!interceptIndex]
+    }
+    
+    return(modelMatrix)
+  }
+  else return(NULL)
+}
+
 #' @export summaryINLAParameter
 #' @keywords internal
 summaryINLAParameter <- function(marginal, fun=identity, coordsScale=1) {
