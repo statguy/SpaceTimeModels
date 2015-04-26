@@ -197,8 +197,8 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
                              control.predictor=list(A=inla.stack.A(private$fullStack), link=dataStack$link, compute=TRUE),
                              control.compute=list(waic=TRUE, config=TRUE),
                              verbose=verbose))
-      if (inherits(private$result), "try-error") || private$result$ok == FALSE)
-        stop("Estimation failed. Use verbose=TRUE to find possible cause.")
+      if (inherits(private$result, "try-error") || private$result$ok == FALSE)
+        stop("Estimation failed. Use verbose=TRUE to find the possible cause.")
       
       return(invisible(self))      
     },
