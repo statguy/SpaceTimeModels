@@ -12,6 +12,9 @@ nullScale <- function(x, y) {
 #' @export getINLAModelMatrix
 #' @keywords internal
 getINLAModelMatrix = function(covariatesModel, covariates) {
+  if (missing(covariatesModel) || is.null(covariatesModel))
+    stop("Required argument 'covariatesModel' missing.")
+  
   x <- if (missing(covariates) || is.null(covariates)) terms(covariatesModel)
   else terms(covariatesModel, data=covariates)
   
