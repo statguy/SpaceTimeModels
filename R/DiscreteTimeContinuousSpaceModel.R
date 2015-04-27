@@ -13,12 +13,6 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
   private = list(
     coordsScale = 1,
     offsetScale = 1,
-    
-    coords = NULL,
-    time = NULL,
-    response = NULL,
-    offset = 1,
-    
     mesh = NULL,
     spde = NULL,
     covariatesModel = NULL,
@@ -31,13 +25,30 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
       if (is.null(private$linearModel))
         stop("Linear model must be defined first.")
       return("intercept" %in% attr(terms(private$linearModel), "term.labels"))
+    },
+    
+    addStack = function(data, A, effects, tag) {
+      obsStack <- inla.stack(data=data, A=A, effects=effects, tag=tag)
+      private$fullStack <- if (is.null(private$fullStack)) inla.stack(obsStack)
+      else {
+        if (names(private$fullStack$data$index) == tag)
+          stop("Stack with tag '", tag, "' already exists.")
+        inla.stack(private$fullStack, obsStack)
+      }
+      return(invisible(self))
     }
   ),
   public = list(
     getCoordinatesScale = function() return(private$coordsScale),
     getOffsetScale = function() return(private$offsetScale),
-    
-    getCoordinates = function() return(private$coords * private$coordsScale),
+    getUnscaledCoordinates = function() {
+      coords <- private$mesh$loc
+      if (private$mesh$manifold == "R1") coords <- coords[,1]
+      else if (private$mesh$manifold == "R2") coords <- coords[,1:2]
+      # TODO: other manifold cases?
+      return(coords)
+    },
+    getCoordinates = function() return(self$getUnscaledCoordinates() * private$coordsScale),
     getTime = function() return(private$time),
     getOffset = function() return(private$offset * private$offsetScale),
     getResponse = function() return(private$response),
@@ -60,15 +71,14 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
       
       private$coordsScale <- if (missing(coordsScale)) SpaceTime::findScale(coords[1,1])
       else coordsScale
-      private$coords <- as.matrix(coords) / private$coordsScale
-      meshCoords <- unique(private$coords)
+      coords <- unique(as.matrix(coords) / private$coordsScale)
       
       if (missing(convex)) {
         locDomain <- SpaceTime::nullScale(locDomain, private$coordsScale)
-        private$mesh <- inla.mesh.2d(loc=private$coords, loc.domain=locDomain, cutoff=SpaceTime::nullScale(cutoff, private$coordsScale), max.edge=SpaceTime::nullScale(maxEdge, private$coordsScale), offset=SpaceTime::nullScale(offset, private$coordsScale), min.angle=minAngle)
+        private$mesh <- inla.mesh.2d(loc=coords, loc.domain=locDomain, cutoff=SpaceTime::nullScale(cutoff, private$coordsScale), max.edge=SpaceTime::nullScale(maxEdge, private$coordsScale), offset=SpaceTime::nullScale(offset, private$coordsScale), min.angle=minAngle)
       }
       else {
-        boundary <- inla.nonconvex.hull(points=meshCoords, convex=convex)
+        boundary <- inla.nonconvex.hull(points=coords, convex=convex)
         private$mesh <- inla.mesh.2d(boundary=boundary, cutoff=SpaceTime::nullScale(cutoff, private$coordsScale), max.edge=SpaceTime::nullScale(maxEdge, private$coordsScale), offset=SpaceTime::nullScale(offset, private$coordsScale), min.angle=minAngle)
       }
       
@@ -79,8 +89,8 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
       if (is.null(private$mesh))
         stop("Mesh must be defined first.")
       
-      plot(private$mesh)
-      points(private$coords, pch='.', col='red')
+      plot(self$getMesh())
+      points(self$getCoordinates(), pch='.', col='red')
       return(invisible(self))
     },
     
@@ -127,17 +137,14 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
       return(self$setCovariatesModel(~ 1))
     },
     
-    addObservationStack = function(time, response, covariates, offset, coordsScale, offsetScale, tag="obs") {
-      # TODO: allow building stack for predictions
+    addObservationStack = function(coords, time, response=NA, covariates, offset, offsetScale, tag="obs") {
       # TODO: allow defining link function
       
+      if (missing(coords))
+        stop("Required argument 'coords' missing.")
       if (missing(time))
         stop("Required argument 'time' missing.")
-      if (missing(response))
-        stop("Required argument 'response' missing.")
       
-      if (is.null(private$coords))
-        stop("Coordinates must be defined first.")
       if (is.null(private$mesh))
         stop("Mesh must be defined first.")
       if (is.null(private$spde))
@@ -145,43 +152,48 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
       if (is.null(private$covariatesModel))
         stop("Covariates model must be defined first.")
       
+      dataList <- list(response=response)
       if (!missing(offset)) {
-        if (length(offset) == 1) offset <- rep(offset, length(response))
         offsetScale <- if (missing(offsetScale)) SpaceTime::findScale(offset[1])
         else offsetScale
-        private$offset <- offset / private$offsetScale
+        dataList$E <- offset / private$offsetScale
       }
       
-      private$time <- time
-      private$response <- response
+      coords <- as.matrix(coords) / private$coordsScale
       modelMatrix <- getINLAModelMatrix(private$covariatesModel, covariates)
+      nTime <- length(unique(time))
+      timeIndex <- time - min(time) + 1
+      fieldIndex <- inla.spde.make.index("spatial", n.spde=private$spde$n.spde, n.group=nTime)
+      A <- inla.spde.make.A(private$mesh, loc=coords, group=timeIndex, n.group=nTime)
       
-      nTime <- length(unique(private$time))
-      timeIndex <- private$time - min(private$time) + 1
-      index <- inla.spde.make.index("spatial", n.spde=private$spde$n.spde, n.group=nTime)
-      A <- inla.spde.make.A(private$mesh, loc=private$coords, group=timeIndex, n.group=nTime)
+      effects <- if (private$hasIntercept()) list(c(fieldIndex, list(intercept=1))) else list(index)
+      AList <- if (!is.null(modelMatrix)) {
+        effects[[2]] <- modelMatrix
+        list(A, 1)
+      }
+      else list(A)
+            
+      private$addStack(data=dataList, A=AList, effects=effects, tag=tag)
       
-      effects <- if (private$hasIntercept()) list(c(index, list(intercept=1)))
-      else list(index)
-      Alist <- if (!is.null(modelMatrix)) {
+      return(invisible(self))
+    },
+        
+    addPredictionStack = function(coords, time, response=NA, covariates, offset, offsetScale, tag="pred") {
+      # TODO: finish this function
+      
+      effects <- if (private$hasIntercept()) list(c(fieldIndex, coords, list(intercept=1))) else list(c(index, coords))
+      AList <- if (!is.null(modelMatrix)) {
         effects[[2]] <- modelMatrix
         list(A, 1)
       }
       else list(A)
       
-      obsStack <- inla.stack(data=list(response=private$response, E=private$offset, link=1),
-                             A=Alist, effects=effects, tag=tag)
-      private$fullStack <- if (is.null(private$fullStack)) inla.stack(obsStack)
-      else {
-        if (names(private$fullStack$data$index) == tag)
-          stop("Stack with tag '", tag, "' already exists.")
-        inla.stack(private$fullStack, obsStack)
-      }
+      addStack(data=dataList, A=AList, effects=effects, tag=tag)
       
       return(invisible(self))
     },
     
-    setLikelihoodModel = function(likelihood) {
+    setLikelihood = function(likelihood) {
       if (missing(likelihood))
         stop("Required argument 'likelihood' missing.")
       private$likelihood <- likelihood
@@ -204,7 +216,7 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
     },
     
     save = function(fileName) {
-      save(distanceUnit, timeUnit, coordsScale, offsetScale, coords, time, response, offset, mesh, spde, covariatesModel, linearModel, fullStack, likelihood, result, envir=private, file=fileName)
+      save(distanceUnit, timeUnit, coordsScale, offsetScale, mesh, spde, covariatesModel, linearModel, fullStack, likelihood, result, envir=private, file=fileName)
       return(invisible(self))
     },
     
