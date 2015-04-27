@@ -32,7 +32,7 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
       private$fullStack <- if (is.null(private$fullStack)) inla.stack(obsStack)
       else {
         if (names(private$fullStack$data$index) == tag)
-          stop("Stack with tag '", tag, "' already exists.")
+          warning("Stack with tag '", tag, "' already exists. Overwriting...")
         inla.stack(private$fullStack, obsStack)
       }
       return(invisible(self))
