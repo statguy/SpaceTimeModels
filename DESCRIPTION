@@ -1,11 +1,11 @@
 Package: SpaceTime
 Type: Package
-Title: Fits spatio-temporal models with ease
+Title: An interface for fitting parametric spatial and spatio-temporal models
 Version: 0.1.01
 Date: 2015-04-22
 Author: Jussi Jousimo
 Maintainer: Jussi Jousimo <jvj@iki.fi>
-Description: Spatio-temporal model fitting with ease
+Description: An interface for fitting parametric spatial and spatio-temporal models
 License: BSD_2_clause + file LICENSE
 Depends:
   R (>= 3.0.0),

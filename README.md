@@ -1,2 +1,2 @@
-# ST
-For fitting simple spatio-temporal models with ease
+# SpaceTime
+An interface for fitting parametric spatial and spatio-temporal models
