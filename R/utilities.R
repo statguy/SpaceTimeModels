@@ -30,6 +30,9 @@ getINLAModelMatrix = function(covariatesModel, covariates) {
       modelMatrix <- modelMatrix[,!interceptIndex]
     }
     
+    if (any(is.na(modelMatrix)))
+      stop("Covariates contain missing values which are not allowed.")
+    
     return(modelMatrix)
   }
   else return(NULL)
