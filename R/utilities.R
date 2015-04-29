@@ -40,8 +40,8 @@ getINLAModelMatrix = function(covariatesModel, covariates) {
 
 #' @export summaryINLAParameter
 #' @keywords internal
-summaryINLAParameter <- function(marginal, fun=identity, coordsScale=1) {
-  m <- inla.tmarginal(function(x) fun(x) * coordsScale, marginal)
+summaryINLAParameter <- function(marginal, fun=identity, coordinatesScale=1) {
+  m <- inla.tmarginal(function(x) fun(x) * coordinatesScale, marginal)
   e <- inla.emarginal(function(x) x, m)
   e2 <- inla.emarginal(function(x) x^2, m)
   sd <- sqrt(e2-e^2)

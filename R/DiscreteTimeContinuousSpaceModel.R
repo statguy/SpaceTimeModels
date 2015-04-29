@@ -11,8 +11,9 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
   "DiscreteTimeContinuousSpaceModel",
   inherit = SpaceTime::SpaceTimeModel,
   private = list(
-    coordsScale = 1,
+    coordinatesScale = 1,
     offsetScale = 1,
+    coordinates = NULL,
     mesh = NULL,
     spde = NULL,
     covariatesModel = NULL,
@@ -39,18 +40,12 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
     }
   ),
   public = list(
-    getCoordinatesScale = function() return(private$coordsScale),
+    getCoordinatesScale = function() return(private$coordinatesScale),
     getOffsetScale = function() return(private$offsetScale),
-    getUnscaledCoordinates = function() {
-      coords <- private$mesh$loc
-      if (private$mesh$manifold == "R1") coords <- coords[,1]
-      else if (private$mesh$manifold == "R2") coords <- coords[,1:2]
-      # TODO: other manifold cases?
-      return(coords)
-    },
-    getCoordinates = function() return(self$getUnscaledCoordinates() * private$coordsScale),
+    getCoordinates = function() return(private$coordinates),
+    getScaledCoordinates = function() return(self$getCoordinates() / self$getCoordinatesScale()),
     getTime = function() return(private$time),
-    getOffset = function() return(private$offset * private$offsetScale),
+    getOffset = function() return(private$offset * self$getOffsetScale()),
     getResponse = function() return(private$response),
     getCovariates = function() return(private$covariates),
     
@@ -61,25 +56,25 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
     getFullStack = function() return(private$fullStack),
     getResult = function() return(private$result),
  
-    constructMesh = function(coords, coordsScale, cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, locDomain=NULL, convex) {
-      if (missing(coords))
-        stop("Required argument 'coords' missing.")
+    constructMesh = function(coordinates, coordinatesScale, cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, locDomain=NULL, convex) {
+      if (missing(coordinates))
+        stop("Required argument 'coordinates' missing.")
       if (missing(cutoff))
         stop("Required argument 'cutoff' missing.")
       if (missing(maxEdge))
         stop("Required argument 'maxEdge' missing.")
       
-      private$coordsScale <- if (missing(coordsScale)) SpaceTime::findScale(coords[1,1])
-      else coordsScale
-      coords <- unique(as.matrix(coords) / private$coordsScale)
+      private$coordinatesScale <- if (missing(coordinatesScale)) SpaceTime::findScale(coordinates[1,1]) else coordinatesScale
+      private$coordinates <- as.matrix(coordinates)
+      meshCoordinates <- unique(self$getCoordinates()) / self$getCoordinatesScale()
       
       if (missing(convex)) {
-        locDomain <- SpaceTime::nullScale(locDomain, private$coordsScale)
-        private$mesh <- inla.mesh.2d(loc=coords, loc.domain=locDomain, cutoff=SpaceTime::nullScale(cutoff, private$coordsScale), max.edge=SpaceTime::nullScale(maxEdge, private$coordsScale), offset=SpaceTime::nullScale(offset, private$coordsScale), min.angle=minAngle)
+        locDomain <- SpaceTime::nullScale(locDomain, self$getCoordinatesScale())
+        private$mesh <- inla.mesh.2d(loc=meshCoordinates, loc.domain=locDomain, cutoff=SpaceTime::nullScale(cutoff, self$getCoordinatesScale()), max.edge=SpaceTime::nullScale(maxEdge, self$getCoordinatesScale()), offset=SpaceTime::nullScale(offset, self$getCoordinatesScale()), min.angle=minAngle)
       }
       else {
-        boundary <- inla.nonconvex.hull(points=coords, convex=convex)
-        private$mesh <- inla.mesh.2d(boundary=boundary, cutoff=SpaceTime::nullScale(cutoff, private$coordsScale), max.edge=SpaceTime::nullScale(maxEdge, private$coordsScale), offset=SpaceTime::nullScale(offset, private$coordsScale), min.angle=minAngle)
+        boundary <- inla.nonconvex.hull(points=meshCoordinates, convex=convex)
+        private$mesh <- inla.mesh.2d(boundary=boundary, cutoff=SpaceTime::nullScale(cutoff, self$getCoordinatesScale()), max.edge=SpaceTime::nullScale(maxEdge, self$getCoordinatesScale()), offset=SpaceTime::nullScale(offset, self$getCoordinatesScale()), min.angle=minAngle)
       }
       
       return(invisible(self))
@@ -90,7 +85,7 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
         stop("Mesh must be defined first.")
       
       plot(self$getMesh())
-      points(self$getCoordinates(), pch='.', col='red')
+      points(self$getScaledCoordinates(), pch='*', col='red')
       return(invisible(self))
     },
     
@@ -137,11 +132,11 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
       return(self$setCovariatesModel(~ 1))
     },
     
-    addObservationStack = function(coords, time, response=NA, covariates, offset, offsetScale, tag="obs") {
+    addObservationStack = function(coordinates, time, response=NA, covariates, offset, offsetScale, tag="obs") {
       # TODO: allow defining link function
       
-      if (missing(coords))
-        stop("Required argument 'coords' missing.")
+      if (missing(coordinates))
+        stop("Required argument 'coordinates' missing.")
       if (missing(time))
         stop("Required argument 'time' missing.")
       
@@ -159,12 +154,12 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
         dataList$E <- offset / private$offsetScale
       }
       
-      coords <- as.matrix(coords) / private$coordsScale
+      coordinates <- as.matrix(coordinates) / self$getCoordinatesScale()
       modelMatrix <- getINLAModelMatrix(private$covariatesModel, covariates)
       nTime <- length(unique(time))
       timeIndex <- time - min(time) + 1
       fieldIndex <- inla.spde.make.index("spatial", n.spde=private$spde$n.spde, n.group=nTime)
-      A <- inla.spde.make.A(private$mesh, loc=coords, group=timeIndex, n.group=nTime)
+      A <- inla.spde.make.A(private$mesh, loc=coordinates, group=timeIndex, n.group=nTime)
       
       effects <- if (private$hasIntercept()) list(c(fieldIndex, list(intercept=1))) else list(index)
       AList <- if (!is.null(modelMatrix)) {
@@ -178,10 +173,10 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))
     },
         
-    addPredictionStack = function(coords, time, response=NA, covariates, offset, offsetScale, tag="pred") {
+    addPredictionStack = function(coordinates, time, response=NA, covariates, offset, offsetScale, tag="pred") {
       # TODO: finish this function
       
-      effects <- if (private$hasIntercept()) list(c(fieldIndex, coords, list(intercept=1))) else list(c(index, coords))
+      effects <- if (private$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(index, coordinates))
       AList <- if (!is.null(modelMatrix)) {
         effects[[2]] <- modelMatrix
         list(A, 1)
@@ -216,7 +211,7 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
     },
     
     save = function(fileName) {
-      save(distanceUnit, timeUnit, coordsScale, offsetScale, mesh, spde, covariatesModel, linearModel, fullStack, likelihood, result, envir=private, file=fileName)
+      save(distanceUnit, timeUnit, coordinatesScale, offsetScale, coordinates, mesh, spde, covariatesModel, linearModel, fullStack, likelihood, result, envir=private, file=fileName)
       return(invisible(self))
     },
     
@@ -228,9 +223,9 @@ DiscreteTimeContinuousSpaceModel <- R6::R6Class(
     
     summarySpatialParameters = function() {
       spdeResult <- self$getSPDEResult()
-      range <- SpaceTime::summaryINLAParameter(spdeResult$marginals.range.nominal[[1]], coordsScale=private$coordsScale)
+      range <- SpaceTime::summaryINLAParameter(spdeResult$marginals.range.nominal[[1]], coordinatesScale=self$getCoordinatesScale())
       variance <- SpaceTime::summaryINLAParameter(spdeResult$marginals.variance.nominal[[1]])
-      kappa <- SpaceTime::summaryINLAParameter(spdeResult$marginals.kappa[[1]], coordsScale=1/private$coordsScale)
+      kappa <- SpaceTime::summaryINLAParameter(spdeResult$marginals.kappa[[1]], coordinatesScale=1/self$getCoordinatesScale())
       tau <- SpaceTime::summaryINLAParameter(spdeResult$marginals.tau[[1]])
       x <- rbind(kappa=kappa, tau=tau, range=range, variance=variance)
       colnames(x) <- c("mean","sd","0.025quant","0.5quant","0.975quant","mode")
