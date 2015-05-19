@@ -27,7 +27,7 @@ getINLAModelMatrix = function(covariatesModel, covariates) {
     interceptIndex <- terms %in% "(Intercept)"
     if (any(interceptIndex)) {
       terms <- terms[!interceptIndex]
-      modelMatrix <- modelMatrix[,!interceptIndex]
+      modelMatrix <- modelMatrix[,!interceptIndex,drop=F]
     }
     
     if (any(is.na(modelMatrix)))
