@@ -44,8 +44,8 @@ ContinuousSpaceModel <- R6::R6Class(
     getFullStack = function() return(private$fullStack),
     
     setSpatialMesh = function(mesh) {
-      if (missing(mesh))
-        stop("Required argument 'mesh' missing.")
+      if (!inherits(mesh, "Mesh"))
+        stop("Argument 'mesh' must be of class 'Mesh'.")
       private$spaceMesh <- mesh
       return(invisible(self))
     },
@@ -144,7 +144,7 @@ ContinuousSpaceModel <- R6::R6Class(
       
       dataStack <- inla.stack.data(self$getFullStack(), spde=self$getSPDEObject())
       private$result <- try(inla(self$getLinearModel(), family=self$getLikelihood(), data=dataStack, E=dataStack$E,
-                                 control.predictor=list(A=inla.stack.A(self$getFullStack()), link=dataStack$link, compute=TRUE),
+                                 control.predictor=list(A=inla.stack.A(self$getFullStack()), compute=TRUE), # link=dataStack$link
                                  control.compute=list(waic=TRUE, config=TRUE),
                                  verbose=verbose))
       if (inherits(private$result, "try-error") || private$result$ok == FALSE)

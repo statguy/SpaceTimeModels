@@ -1,4 +1,4 @@
-# Test the DiscreteTimeContinuousSpaceModel class with Cameletti et al. (2012) data and model
+# Test the ContinuousSpaceDiscreteTimeModel class with Cameletti et al. (2012) data and model
 
 Piemonte_data <- read.csv("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/Piemonte_data_byday.csv", header=TRUE, sep=",")
 coordinates <- read.csv("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/coordinates.csv", header=TRUE, sep=",")
