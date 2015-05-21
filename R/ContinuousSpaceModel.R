@@ -16,6 +16,10 @@ ContinuousSpaceModel <- R6::R6Class(
     spde = NULL,
     fullStack = NULL,
     
+    scaleCoordinates = function(coordinates) {
+      return(as.matrix(coordinates) / self$getSpatialMesh()$getScale())
+    },
+    
     getRandomEffectTerm = function() {
       return("f(spatial, model=spde)")
     },
@@ -107,10 +111,11 @@ ContinuousSpaceModel <- R6::R6Class(
         dataList$E <- offset / private$offsetScale
       }
       
-      coordinates <- as.matrix(coordinates) / self$getSpatialMesh()$getScale()
+      coordinates <- private$scaleCoordinates(coordinates)
       modelMatrix <- SpaceTime::getINLAModelMatrix(private$covariatesModel, covariates)
-      fieldIndex <- inla.spde.make.index("spatial", n.spde=private$spde$n.spde)
+      fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde)
       A <- inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc=coordinates)
+      
       effects <- if (private$hasIntercept()) list(c(fieldIndex, list(intercept=1))) else list(fieldIndex)
       AList <- if (!is.null(modelMatrix)) {
         effects[[2]] <- modelMatrix

@@ -38,11 +38,11 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
         dataList$E <- offset / private$offsetScale
       }
 
-      coordinates <- as.matrix(coordinates) / self$getSpatialMesh()$getScale()
+      coordinates <- private$scaleCoordinates(coordinates)
       modelMatrix <- SpaceTime::getINLAModelMatrix(private$covariatesModel, covariates)
-      nTime <- length(unique(time))
       timeIndex <- time - min(time) + 1
-      fieldIndex <- inla.spde.make.index("spatial", n.spde=private$spde$n.spde, n.group=nTime)
+      nTime <- length(unique(timeIndex))
+      fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde, n.group=nTime)
       A <- inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc=coordinates, group=timeIndex, n.group=nTime)
       
       effects <- if (private$hasIntercept()) list(c(fieldIndex, list(intercept=1))) else list(fieldIndex)
