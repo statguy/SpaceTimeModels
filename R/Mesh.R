@@ -13,10 +13,10 @@ Mesh <- R6::R6Class(
     getMeshKnots = function() return(unique(self$getKnots()) / self$getScale())
   ),
   public = list(
-    initialize = function(knots, knotsScale) {
+    initialize = function(knots, knotsScale=1) {
       if (missing(knots))
         stop("Required argument 'knots' missing.")
-      private$knotsScale <- if (missing(knotsScale)) SpaceTime::findScale(knots[1,1]) else knotsScale
+      private$knotsScale <- knotsScale
       private$knots <- as.matrix(knots)
     },
     

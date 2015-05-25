@@ -24,28 +24,12 @@ SpaceModel <- R6::R6Class(
     
     getDistanceUnit = function() return(distanceUnit),
     getOffsetScale = function() return(private$offsetScale),
-    #getOffset = function() return(private$offset * self$getOffsetScale()),
     getLikelihood = function() return(private$likelihood),
     getLinearModel = function() return(private$linearModel),
     getResult = function() return(private$result),
             
     setCovariatesModel = function(covariatesModel, covariates) {
       stop("Unimplemented abstract method 'setCovariatesModel'.")
-#       
-#       if (missing(covariatesModel)) covariatesModel <- ~ 1
-#       x <- if (missing(covariates)) terms(covariatesModel)
-#       else terms(covariatesModel, data=covariates)
-#       
-#       if (attr(x, "response") != 0)
-#         stop("The covariates model formula must be right-sided.")
-#       
-#       private$covariatesModel <- covariatesModel
-#       covariates <- colnames(getINLAModelMatrix(covariatesModel, covariates))
-#       intercept <- if (attr(x, "intercept")[1] == 0) FALSE else TRUE
-#       randomEffect <- private$getRandomEffectTerm()
-#       private$linearModel <- reformulate(termlabels=c(covariates, randomEffect), response="response", intercept=intercept)
-#       
-#       return(invisible(self))
     },
     
     setSmoothingModel = function() {
@@ -64,12 +48,33 @@ SpaceModel <- R6::R6Class(
     },
     
     save = function(fileName) {
-      stop("Unimplemented abstract method 'save'.")
+      save(self, file=fileName)
+      return(invisible(self))
     },
     
     load = function(fileName) {
-      load(fileName, env=private)
+      load(fileName, env=self)
       return(invisible(self))
+    },
+
+    summary = function() {
+      print(summary(self$getResult()))
+      return(invisible(self))
+    },
+
+    getFittedResponse = function(tab="obs") {
+      stop("Unimplemented abstract method 'getFittedResponse'.")
+    },
+    
+    getFittedLinearPredictor = function(tag="obs") {
+      stop("Unimplemented abstract method 'getFittedLinearPredictor'.")
+    },
+    
+    getFittedSpatialEffect = function() {
+      data <- list()
+      data$spatialMean <- self$getResult()$summary.random$spatial$mean
+      data$spatialSd <- self$getResult()$summary.random$spatial$sd
+      return(as.data.frame(data))
     }
   )
 )

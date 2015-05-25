@@ -16,11 +16,9 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     }
   ),
   public = list(
-    addObservationStack = function(coordinates, time, response=NA, covariates, offset, offsetScale, tag="obs") {
+    addObservationStack = function(coordinates, time, response=NA, covariates, offset, offsetScale=1, tag="obs") {
       # TODO: allow defining link function
       
-      if (missing(coordinates))
-        stop("Required argument 'coordinates' missing.")
       if (missing(time))
         stop("Required argument 'time' missing.")
 
@@ -30,15 +28,16 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
         stop("Spatial prior must be defined first.")
       if (is.null(private$covariatesModel))
         stop("Covariates model must be defined first.")
+      if (missing(coordinates)) coordinates <- model$getSpatialMesh()$getKnots()
 
       dataList <- list(response=response)
       if (!missing(offset)) {
-        private$offsetScale <- if (missing(offsetScale)) SpaceTime::findScale(offset[1])
-        else offsetScale
+        private$offsetScale <- offsetScale
         dataList$E <- offset / private$offsetScale
       }
 
       coordinates <- private$scaleCoordinates(coordinates)
+      SpaceTime::assertCompleteCovariates(private$covariatesModel, covariates)
       modelMatrix <- SpaceTime::getINLAModelMatrix(private$covariatesModel, covariates)
       timeIndex <- time - min(time) + 1
       nTime <- length(unique(timeIndex))

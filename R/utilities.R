@@ -51,3 +51,14 @@ summaryINLAParameter <- function(marginal, fun=identity, coordinatesScale=1) {
   colnames(x) <- c("mean", "sd", "0.025quant","0.5quant","0.975quant", "mode")
   return(x)
 }
+
+#' @export assertCompleteCovariates
+#' @keywords internal
+assertCompleteCovariates <- function(covariatesModel, covariates) {
+  if (!missing(covariates)) {
+    x <- terms(covariatesModel, data=covariates)
+    complete <- complete.cases(covariates[,attr(x, "term.labels"),drop=F])
+    if (any(complete == FALSE))
+      stop("Covariates cannot contain missing data.")
+  }
+}

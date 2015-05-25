@@ -35,8 +35,7 @@ ContinuousSpaceModel <- R6::R6Class(
       private$fullStack <- if (is.null(private$fullStack)) inla.stack(obsStack)
       else {
         if (names(private$fullStack$data$index) == tag)
-          warning("Stack with tag '", tag, "' already exists. Overwriting...")
-        # TODO: this doesn't exactly overwrite?
+          stop("Stack with tag '", tag, "' already exists.")
         inla.stack(private$fullStack, obsStack)
       }
       return(invisible(self))
@@ -47,9 +46,16 @@ ContinuousSpaceModel <- R6::R6Class(
     getSPDEObject = function() return(private$spde),
     getFullStack = function() return(private$fullStack),
     
+    clearStack = function() {
+      private$fullStack <- NULL
+      return(invisible(self))
+    },
+    
     setSpatialMesh = function(mesh) {
       if (!inherits(mesh, "Mesh"))
         stop("Argument 'mesh' must be of class 'Mesh'.")
+      if (is.null(mesh$getINLAMesh()))
+        stop("Mesh has not been initialized.")
       private$spaceMesh <- mesh
       return(invisible(self))
     },
@@ -57,7 +63,10 @@ ContinuousSpaceModel <- R6::R6Class(
     setCovariatesModel = function(covariatesModel, covariates) {
       if (missing(covariatesModel)) covariatesModel <- ~ 1
       x <- if (missing(covariates)) terms(covariatesModel)
-      else terms(covariatesModel, data=covariates)
+      else {
+        SpaceTime::assertCompleteCovariates(covariatesModel, covariates)
+        terms(covariatesModel, data=covariates)
+      }
       
       if (attr(x, "response") != 0)
         stop("The covariates model formula must be right-sided.")
@@ -92,26 +101,25 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))        
     },
     
-    addObservationStack = function(coordinates, response=NA, covariates, offset, offsetScale, tag="obs") {
+    addObservationStack = function(coordinates, response=NA, covariates, offset, offsetScale=1, tag="obs") {
       # TODO: allow defining link function
       
-      if (missing(coordinates))
-        stop("Required argument 'coordinates' missing.")
       if (is.null(self$getSpatialMesh()))
         stop("Mesh must be defined first.")
       if (is.null(private$spde))
         stop("Spatial prior must be defined first.")
       if (is.null(private$covariatesModel))
         stop("Covariates model must be defined first.")
-      
+      if (missing(coordinates)) coordinates <- model$getSpatialMesh()$getKnots()
+        
       dataList <- list(response=response)
       if (!missing(offset)) {
-        private$offsetScale <- if (missing(offsetScale)) SpaceTime::findScale(offset[1])
-        else offsetScale
+        private$offsetScale <- offsetScale
         dataList$E <- offset / private$offsetScale
       }
       
       coordinates <- private$scaleCoordinates(coordinates)
+      SpaceTime::assertCompleteCovariates(private$covariatesModel, covariates)
       modelMatrix <- SpaceTime::getINLAModelMatrix(private$covariatesModel, covariates)
       fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde)
       A <- inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc=coordinates)
@@ -157,9 +165,30 @@ ContinuousSpaceModel <- R6::R6Class(
       
       return(invisible(self))
     },
+
+    getFittedResponse = function(tag="obs") {
+      index <- inla.stack.index(self$getFullStack(), tag)$data
+      offset <- inla.stack.LHS(self$getFullStack())$E[index]
+      if (is.null(offset)) offset <- 1
+      data <- list()
+      data$responseMean <- self$getResult()$summary.fitted.values$mean[index] * offset
+      data$responseSd <- self$getResult()$summary.fitted.values$sd[index] * offset
+      return(as.data.frame(data))
+    },
     
-    save = function(fileName) {
-      stop("Unimplemented abstract method 'save'.")
+    getFittedLinearPredictor = function(tag="obs") {
+      index <- inla.stack.index(self$getFullStack(), tag)$data
+      data <- list()
+      data$etaMean <- self$getResult()$summary.linear.predictor$mean[index]
+      data$etaSd <- self$getResult()$summary.linear.predictor$sd[index]
+      return(as.data.frame(data))      
+    },
+    
+    getFittedSpatialEffect = function() {
+      data <- list()
+      data$spatialMean <- self$getResult()$summary.random$spatial$mean
+      data$spatialSd <- self$getResult()$summary.random$spatial$sd
+      return(as.data.frame(data))
     }
   )
 )
