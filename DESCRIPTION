@@ -17,7 +17,6 @@ URL: https://github.com/statguy/SpaceTime
 LazyLoad: yes
 Collate:
   'utilities.R'
-  'SpaceTimeDataFrame.R'
   'Mesh.R'
   'TwoDMesh.R'
   'NonConvexHullMesh.R'
