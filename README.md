@@ -83,14 +83,14 @@ details of the autoregressive and the Besag models.
 Test version of R-INLA is required to be installed first, see [http://www.r-inla.org/download](here) for
 the installation instructions. The SpaceTime package is installed with the `devtools` package using
 the command `devtools::install_github("statguy/SpaceTime")`. Additional packages are installed
-automatically from CRAN if needed. The package is ready to use with the command
+automatically from CRAN if needed. The package will be ready to use with the command
 ```
 library(SpaceTime)
 ```
 
 ## Usage
 
-The general assembly for constructing the models is the following:
+The assembly line for constructing the models is the following:
 
 1. Create model object.
 2. Specify mesh for continuous spatial models / Specify the neighborhood structure for discrete spatial models.
