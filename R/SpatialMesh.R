@@ -5,10 +5,9 @@
 #' @format NULL
 #' @import R6
 #' @author Jussi Jousimo \email{jvj@@iki.fi}
-#' @exportClass TwoDMesh
-#' @export TwoDMesh
-#' @keywords internal
-TwoDMesh <- R6::R6Class(
+#' @exportClass SpatialMesh
+#' @export SpatialMesh
+SpatialMesh <- R6::R6Class(
   "TwoDMesh",
   inherit = SpaceTime::Mesh,
   private = list(

@@ -13,5 +13,5 @@ Jussi Jousimo \email{jvj@iki.fi}
 \references{
 Lindgren, F. & Rue, H. (2015). Bayesian Spatial Modelling with R-INLA. Journal of Statistical Software, 63(19).
 }
-\keyword{internal}
+\keyword{datasets}
 

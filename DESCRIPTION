@@ -18,7 +18,7 @@ LazyLoad: yes
 Collate:
   'utilities.R'
   'Mesh.R'
-  'TwoDMesh.R'
+  'SpatialMesh.R'
   'NonConvexHullMesh.R'
   'SpaceModel.R'
   'ContinuousSpaceModel.R'

@@ -7,7 +7,6 @@
 #' @author Jussi Jousimo \email{jvj@@iki.fi}
 #' @exportClass NonConvexHullMesh
 #' @export NonConvexHullMesh
-#' @keywords internal
 NonConvexHullMesh <- R6::R6Class(
   "NonConvexHullMesh",
   inherit = SpaceTime::Mesh,

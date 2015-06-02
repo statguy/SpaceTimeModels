@@ -22,7 +22,7 @@ sd_covariates <- apply(Piemonte_data[,3:10], 2, sd)
 Piemonte_data[,3:10] <- scale(Piemonte_data[,3:10], mean_covariates, sd_covariates)
 Piemonte_data_validation[,3:10] <- scale(Piemonte_data_validation[,3:10], mean_covariates, sd_covariates)
 
-mesh <- SpaceTime::TwoDMesh$new(knots=cbind(coordinates$UTMX, coordinates$UTMY))
+mesh <- SpaceTime::SpatialMesh$new(knots=cbind(coordinates$UTMX, coordinates$UTMY))
 mesh$construct(locDomain=borders, offset=c(10, 140), maxEdge=c(50, 1000), minAngle=c(26, 21), cutoff=0)
 mesh$plot()
 
