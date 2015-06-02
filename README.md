@@ -217,12 +217,14 @@ To access the R-INLA result object directly, `getResult()` method is provided.
 
 ## Examples
 
-* [Cameletti et al. (2002)](http://www.r-inla.org/examples/case-studies/cameletti-et-al) reproduced with the SpaceTime package,
+* [Cameletti et al. (2012)](http://www.r-inla.org/examples/case-studies/cameletti-et-al) reproduced with the SpaceTime package,
 [link](https://github.com/statguy/SpaceTime/blob/master/inst/tests/tests1.R).
 
 ## References and supporting material
 
 * [Lindgren, F., Rue, H. (2015). Bayesian Spatial Modelling with R-INLA. Journal of Statistical Software.](http://www.math.ntnu.no/inla/r-inla.org/papers/jss/lindgren.pdf)
+* [Cameletti, M., Lindgren, F., Simpson, D., Rue, H. (2012). Spatio-temporal modeling of particulate matter concentration through the SPDE approach. AStA Advances in Statistical Analysis](http://www.math.ntnu.no/~daniesi/Cameletti_et_al_submitted.pdf)
+* [Krainski, E.T., Lindgren, F., Simpson, D., Rue, H. The R-INLA tutorial on SPDE models.](http://www.math.ntnu.no/inla/r-inla.org/tutorials/spde/spde-tutorial.pdf)
 * [Gelman, A., Hwang, J., Vehtari, A. (2013). Understanding predictive information criteria for Bayesian models. Statistics and Computing.](http://www.stat.columbia.edu/~gelman/research/published/waic_understand3.pdf)
 
 ## Contact
