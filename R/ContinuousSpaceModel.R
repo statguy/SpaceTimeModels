@@ -71,6 +71,10 @@ ContinuousSpaceModel <- R6::R6Class(
       if (attr(x, "response") != 0)
         stop("The covariates model formula must be right-sided.")
       
+      if (!is.null(covariatesModel)) {
+        warning("Covariates model has been respecified. To enable reuse of the model object, clearStack() method must be called and the data stack needs to be reconstructed.")
+      }
+      
       private$covariatesModel <- covariatesModel
       covariates <- colnames(getINLAModelMatrix(covariatesModel, covariates))
       intercept <- if (attr(x, "intercept")[1] == 0) NULL else "intercept"
