@@ -218,8 +218,8 @@ To access the R-INLA result object directly, `getResult()` method is provided.
 ### Model selection
 
 Model selection can be performed with the same model object by respecifying the covariate model. However, the data stack
-needs to be reconstructed by first issuing the `clearStack()` method and repeating the `add*Stack()` methods.
-The `summary()` method provides the
+needs to be reconstructed by first issuing the `clearStack()` method and then repeating the `add*Stack()` methods
+before estimation. The `summary()` method provides the
 [WAIC](http://www.stat.columbia.edu/~gelman/research/published/waic_understand3.pdf) measure for the model selection.
 
 ## Examples
