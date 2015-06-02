@@ -1,6 +1,6 @@
 # SpaceTime - An interface for fitting parametric spatial and spatio-temporal models with R and INLA
 
-TODO: 1D meshes, discrete spatial models, priors
+README TODO: 1D meshes, discrete spatial models, priors, data stack
 
 ## Introduction
 
@@ -175,7 +175,7 @@ Covariates are specified with the `setCovariatesModel` method, which takes argum
 
 For example
 ```
-model$setCovariatesModel(covariatesModel = ~ a + b, covariates = covariates)$
+model$setCovariatesModel(covariatesModel = ~ a + b, covariates = covariates)
 ```
 
 Intercept-only model can be specified with the `setSmoothingModel()` method,
@@ -210,10 +210,17 @@ Note that spatio-temporal models may take considerable amount of time and memory
 
 The following methods provide basic summaries of the estimated models
 
-* `summary` for overall summary of the model.
-* `summarySpatialParameters` for summary of the spatial parameters.
+* `summary()` for overall summary of the model.
+* `summarySpatialParameters()` for summary of the spatial parameters.
 
 To access the R-INLA result object directly, `getResult()` method is provided.
+
+### Model selection
+
+Model selection can be performed with the same model object by respecifying the covariate model. However, the data stack
+needs to be reconstructed by first issuing the `clearStack()` method and repeating the `add*Stack()` methods.
+The `summary()` method provides the
+[WAIC](http://www.stat.columbia.edu/~gelman/research/published/waic_understand3.pdf) measure for the model selection.
 
 ## Examples
 
@@ -223,7 +230,7 @@ To access the R-INLA result object directly, `getResult()` method is provided.
 ## References and supporting material
 
 * [Lindgren, F., Rue, H. (2015). Bayesian Spatial Modelling with R-INLA. Journal of Statistical Software.](http://www.math.ntnu.no/inla/r-inla.org/papers/jss/lindgren.pdf)
-* [Cameletti, M., Lindgren, F., Simpson, D., Rue, H. (2012). Spatio-temporal modeling of particulate matter concentration through the SPDE approach. AStA Advances in Statistical Analysis](http://www.math.ntnu.no/~daniesi/Cameletti_et_al_submitted.pdf)
+* [Cameletti, M., Lindgren, F., Simpson, D., Rue, H. (2012). Spatio-temporal modeling of particulate matter concentration through the SPDE approach. AStA Advances in Statistical Analysis.](http://www.math.ntnu.no/~daniesi/Cameletti_et_al_submitted.pdf)
 * [Krainski, E.T., Lindgren, F., Simpson, D., Rue, H. The R-INLA tutorial on SPDE models.](http://www.math.ntnu.no/inla/r-inla.org/tutorials/spde/spde-tutorial.pdf)
 * [Gelman, A., Hwang, J., Vehtari, A. (2013). Understanding predictive information criteria for Bayesian models. Statistics and Computing.](http://www.stat.columbia.edu/~gelman/research/published/waic_understand3.pdf)
 
