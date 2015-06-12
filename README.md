@@ -1,7 +1,8 @@
 ---
 output: pdf_document
 ---
-[PDF](https://github.com/statguy/SpaceTimeModels/blob/master/README.pdf) (Please read the PDF to see the equations.)
+[PDF](https://github.com/statguy/SpaceTimeModels/blob/master/README.pdf) (Please view the PDF to see
+the equations properly.)
 
 # SpaceTimeModels - An R package for fitting parametric spatial and spatio-temporal models with INLA
 
