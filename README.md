@@ -1,13 +1,16 @@
+---
+output: pdf_document
+---
 [PDF](https://github.com/statguy/SpaceTimeModels/blob/master/README.pdf) (Please read the PDF to see the equations.)
 
-# SpaceTimeModels - An interface for fitting parametric spatial and spatio-temporal models with R and INLA
+# SpaceTimeModels - An R package for fitting parametric spatial and spatio-temporal models with INLA
 
 ## Introduction
 
 The `SpaceTimeModels` [R](http://www.r-project.org/) package provides a simplified interface for parametrizing
 a few standard spatial and spatio-temporal models with [R-INLA](http://www.r-inla.org/). The models enable
 parametric (ie. the parameters are estimated from the data) smoothing over space and time and determining
-effect of covariates on response.
+the effect of covariates on response.
 
 ### Autocorrelation
 
@@ -220,21 +223,25 @@ TODO
 
 ### Likelihood
 
-Likelihood is specified with
+The models support various types of response data such as continuous (Gaussian), binary (binomial) and count (Poisson).
+The response data type is specified with
 ```
 model$setLikelihood("x")
 ```
-where `x` is the likelihood. Please refer to the [R-INLA documentation](http://www.r-inla.org/models/likelihoods)
-for the supported likelihoods.
+where `x` is the selected likelihood. Please refer to the [R-INLA documentation](http://www.r-inla.org/models/likelihoods)
+for all supported likelihoods.
 When using count data likelihoods such as binomial and Poisson, the offset term is supplied
-for the `addObservationStack` method via the `offset` argument. Otherwise the offset is assumed
+for the stack methods method via the `offset` argument. Otherwise the offset is assumed
 to equal to 1. See the section Data stacks.
+
+TODO: offset argument for discrete models etc.
 
 ### Estimation
 
-Once the model is specified, estimation is started with the `estimate()` method.
+Once the data and the model are specified, estimation is started with the `estimate()` method.
 Argument `verbose=TRUE` is recommended to be supplied to follow progress of the estimation.
-Note that spatio-temporal models may take considerable amount of time and memory to be estimated.
+Note that the spatio-temporal models may take considerable amount of time and memory to
+be estimated.
 
 ### Extracting results
 
