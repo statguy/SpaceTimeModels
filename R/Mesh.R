@@ -9,21 +9,27 @@ Mesh <- R6::R6Class(
     knotsScale = NULL,
     knots = NULL,
     mesh = NULL,
+    crs = NULL,
     
-    getMeshKnots = function() return(unique(self$getKnots()) / self$getScale())
+    getMeshKnots = function() return(unique(private$knots) / self$getScale())
   ),
   public = list(
     initialize = function(knots, knotsScale=1) {
       if (missing(knots))
         stop("Required argument 'knots' missing.")
+      if (!inherits(knots, "SpatialPoints"))
+        stop("Argument 'knots' must be of class 'SpatialPoints'.")
       private$knotsScale <- knotsScale
-      private$knots <- as.matrix(knots)
+      #private$knots <- as.matrix(knots)
+      private$knots <- sp::coordinates(obs)
+      private$crs <- sp::CRS(sp::proj4string(obs))
     },
     
     getScale = function() return(private$knotsScale),
-    getKnots = function() return(private$knots),
-    getScaledKnots = function() return(self$getKnots() / self$getScale()),
+    getKnots = function() return(sp::SpatialPoints(private$knots, proj4string=self$getCRS())),
+    getScaledKnots = function() return(sp::SpatialPoints(private$knots / self$getScale(), proj4string=self$getCRS())),
     getINLAMesh = function() return(private$mesh),
+    getCRS = function() return(private$crs),
     
     construct = function(...) {
       stop("Unimplemented abstract method 'construct'.")

@@ -9,26 +9,31 @@
 #' @export ContinuousSpaceDiscreteTimeModel
 ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
   "ContinuousSpaceDiscreteTimeModel",
-  inherit = SpaceTime::ContinuousSpaceTimeModel,
+  inherit = SpaceTimeModels::ContinuousSpaceTimeModel,
   private = list(
     getRandomEffectTerm = function() {
       return("f(spatial, model=spde, group=spatial.group, control.group=list(model=\"ar1\"))")
     }
   ),
   public = list(
-    addObservationStack = function(coordinates, time, response=NA, covariates, offset, offsetScale=1, tag="obs") {
+    addObservationStack = function(stdf, response=NA, covariates, offset, offsetScale=1, tag="obs") {
       # TODO: allow defining link function
       
-      if (missing(time))
-        stop("Required argument 'time' missing.")
-
+      if (missing(stdf))
+        stop("Required argument 'stdf' missing.")
+      if (!inherits(stdf, "STI"))
+        stop("Argument 'stdf' must be of class 'STI'.")
+      
+      #if (missing(time))
+      #  stop("Required argument 'time' missing.")
+      
       if (is.null(self$getSpatialMesh()))
         stop("Mesh must be defined first.")
       if (is.null(self$getSPDEObject()))
         stop("Spatial prior must be defined first.")
       if (is.null(private$covariatesModel))
         stop("Covariates model must be defined first.")
-      if (missing(coordinates)) coordinates <- model$getSpatialMesh()$getKnots()
+      #if (missing(coordinates)) coordinates <- model$getSpatialMesh()$getKnots()
 
       dataList <- list(response=response)
       if (!missing(offset)) {
@@ -36,9 +41,11 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
         dataList$E <- offset / private$offsetScale
       }
 
-      coordinates <- private$scaleCoordinates(coordinates)
-      SpaceTime::assertCompleteCovariates(private$covariatesModel, covariates)
-      modelMatrix <- SpaceTime::getINLAModelMatrix(private$covariatesModel, covariates)
+      #coordinates <- private$scaleCoordinates(coordinates)
+      coordinates <- private$scaleCoordinates(sp::coordinates(stdf))
+      SpaceTimeModels::assertCompleteCovariates(private$covariatesModel, covariates)
+      modelMatrix <- SpaceTimeModels::getINLAModelMatrix(private$covariatesModel, covariates)
+      time <- as.integer(stdf@time)
       timeIndex <- time - min(time) + 1
       nTime <- length(unique(timeIndex))
       fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde, n.group=nTime)
@@ -56,8 +63,14 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       return(invisible(self))
     },
         
-    addPredictionStack = function(coordinates, time, response=NA, covariates, offset, offsetScale, tag="pred") {
+    addPredictionStack = function(stdf, response=NA, covariates, offset, offsetScale, tag="pred") {
       # TODO: finish this function
+      
+      if (missing(stdf))
+        stop("Required argument 'stdf' missing.")
+      if (!inherits(stdf, "STI"))
+        stop("Argument 'stdf' must be of class 'STI'.")
+      coordinates <- sp::coordinates(stdf)
       
       effects <- if (private$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(index, coordinates))
       AList <- if (!is.null(modelMatrix)) {
@@ -79,10 +92,10 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     
     summarySpatialParameters = function() {
       spdeResult <- self$getSPDEResult()
-      range <- SpaceTime::summaryINLAParameter(spdeResult$marginals.range.nominal[[1]], coordinatesScale=self$getCoordinatesScale())
-      variance <- SpaceTime::summaryINLAParameter(spdeResult$marginals.variance.nominal[[1]])
-      kappa <- SpaceTime::summaryINLAParameter(spdeResult$marginals.kappa[[1]], coordinatesScale=1/self$getCoordinatesScale())
-      tau <- SpaceTime::summaryINLAParameter(spdeResult$marginals.tau[[1]])
+      range <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.range.nominal[[1]], coordinatesScale=self$getCoordinatesScale())
+      variance <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.variance.nominal[[1]])
+      kappa <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.kappa[[1]], coordinatesScale=1/self$getCoordinatesScale())
+      tau <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.tau[[1]])
       x <- rbind(kappa=kappa, tau=tau, range=range, variance=variance)
       colnames(x) <- c("mean","sd","0.025quant","0.5quant","0.975quant","mode")
       print(x)

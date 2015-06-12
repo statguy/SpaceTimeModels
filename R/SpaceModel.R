@@ -6,7 +6,6 @@
 SpaceModel <- R6::R6Class(
   "SpaceModel",
   private = list(
-    distanceUnit = "m",
     offsetScale = 1,
     covariatesModel = NULL,
     linearModel = NULL,
@@ -18,10 +17,6 @@ SpaceModel <- R6::R6Class(
     }
   ),
   public = list(
-    initialize = function(distanceUnit="m") {
-      private$distanceUnit <- distanceUnit
-    },
-    
     getDistanceUnit = function() return(distanceUnit),
     getOffsetScale = function() return(private$offsetScale),
     getLikelihood = function() return(private$likelihood),

@@ -9,7 +9,7 @@
 #' @export NonConvexHullMesh
 NonConvexHullMesh <- R6::R6Class(
   "NonConvexHullMesh",
-  inherit = SpaceTime::Mesh,
+  inherit = SpaceTimeModels::Mesh,
   private = list(
   ),
   public = list(
@@ -22,9 +22,9 @@ NonConvexHullMesh <- R6::R6Class(
       meshCoordinates <- private$getMeshKnots()
       boundary <- inla.nonconvex.hull(points=meshCoordinates, convex=convex)
       private$mesh <- inla.mesh.2d(boundary=boundary,
-                                   cutoff=SpaceTime::nullScale(cutoff, self$getScale()),
-                                   max.edge=SpaceTime::nullScale(maxEdge, self$getScale()),
-                                   offset=SpaceTime::nullScale(offset, self$getScale()),
+                                   cutoff=SpaceTimeModels::nullScale(cutoff, self$getScale()),
+                                   max.edge=SpaceTimeModels::nullScale(maxEdge, self$getScale()),
+                                   offset=SpaceTimeModels::nullScale(offset, self$getScale()),
                                    min.angle=minAngle)
       
       return(invisible(self))

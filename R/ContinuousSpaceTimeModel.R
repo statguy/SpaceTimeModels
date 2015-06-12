@@ -5,16 +5,9 @@
 #' @keywords internal
 ContinuousSpaceTimeModel <- R6::R6Class(
   "SpaceTimeModel",
-  inherit = SpaceTime::ContinuousSpaceModel,
+  inherit = SpaceTimeModels::ContinuousSpaceModel,
   private = list(
-    timeUnit = "a"
   ),
   public = list(
-    initialize = function(distanceUnit="m", timeUnit="a") {
-      super$initialize(distanceUnit=distanceUnit)
-      private$timeUnit <- timeUnit
-    },
-    
-    getTimeUnit = function() return(timeUnit)    
   )
 )

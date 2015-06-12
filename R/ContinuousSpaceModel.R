@@ -10,7 +10,7 @@
 #' @keywords internal
 ContinuousSpaceModel <- R6::R6Class(
   "ContinuousSpaceModel",
-  inherit = SpaceTime::SpaceModel,
+  inherit = SpaceTimeModels::SpaceModel,
   private = list(
     spaceMesh = NULL,
     spde = NULL,
@@ -64,14 +64,14 @@ ContinuousSpaceModel <- R6::R6Class(
       if (missing(covariatesModel)) covariatesModel <- ~ 1
       x <- if (missing(covariates)) terms(covariatesModel)
       else {
-        SpaceTime::assertCompleteCovariates(covariatesModel, covariates)
+        SpaceTimeModels::assertCompleteCovariates(covariatesModel, covariates)
         terms(covariatesModel, data=covariates)
       }
       
       if (attr(x, "response") != 0)
         stop("The covariates model formula must be right-sided.")
       
-      if (!is.null(covariatesModel)) {
+      if (!is.null(private$covariatesModel)) {
         warning("Covariates model has been respecified. To enable reuse of the model object, clearStack() method must be called and the data stack needs to be reconstructed.")
       }
       
@@ -105,7 +105,7 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))        
     },
     
-    addObservationStack = function(coordinates, response=NA, covariates, offset, offsetScale=1, tag="obs") {
+    addObservationStack = function(sp, response=NA, covariates, offset, offsetScale=1, tag="obs") {
       # TODO: allow defining link function
       
       if (is.null(self$getSpatialMesh()))
@@ -114,7 +114,11 @@ ContinuousSpaceModel <- R6::R6Class(
         stop("Spatial prior must be defined first.")
       if (is.null(private$covariatesModel))
         stop("Covariates model must be defined first.")
-      if (missing(coordinates)) coordinates <- model$getSpatialMesh()$getKnots()
+      #if (missing(coordinates)) coordinates <- model$getSpatialMesh()$getKnots()
+      if (missing(sp))
+        stop("Required argument 'sp' must be given.")
+      if (!inherits(sp, "SpatialPoints"))
+        stop("Argument 'sp' must be of class 'SpatialPoints'.")
         
       dataList <- list(response=response)
       if (!missing(offset)) {
@@ -122,9 +126,9 @@ ContinuousSpaceModel <- R6::R6Class(
         dataList$E <- offset / private$offsetScale
       }
       
-      coordinates <- private$scaleCoordinates(coordinates)
-      SpaceTime::assertCompleteCovariates(private$covariatesModel, covariates)
-      modelMatrix <- SpaceTime::getINLAModelMatrix(private$covariatesModel, covariates)
+      coordinates <- private$scaleCoordinates(sp::coordinates(sp))
+      SpaceTimeModels::assertCompleteCovariates(private$covariatesModel, covariates)
+      modelMatrix <- SpaceTimeModels::getINLAModelMatrix(private$covariatesModel, covariates)
       fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde)
       A <- inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc=coordinates)
       
@@ -140,8 +144,14 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))
     },
     
-    addPredictionStack = function(coordinates, response=NA, covariates, offset, offsetScale, tag="pred") {
+    addPredictionStack = function(sp, response=NA, covariates, offset, offsetScale, tag="pred") {
       # TODO: finish this function
+      
+      if (missing(sp))
+        stop("Required argument 'sp' must be given.")
+      if (!inherits(sp, "SpatialPoints"))
+        stop("Argument 'sp' must be of class 'SpatialPoints'.")
+      coordinates <- private$scaleCoordinates(sp::coordinates(sp))
       
       effects <- if (private$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(index, coordinates))
       AList <- if (!is.null(modelMatrix)) {

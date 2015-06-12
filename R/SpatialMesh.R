@@ -9,7 +9,7 @@
 #' @export SpatialMesh
 SpatialMesh <- R6::R6Class(
   "TwoDMesh",
-  inherit = SpaceTime::Mesh,
+  inherit = SpaceTimeModels::Mesh,
   private = list(
   ),
   public = list(
@@ -18,14 +18,16 @@ SpatialMesh <- R6::R6Class(
         stop("Required argument 'cutoff' missing.")
       if (missing(maxEdge))
         stop("Required argument 'maxEdge' missing.")
+      if (!is.null(locDomain) && !inherits(locDomain, "SpatialPoints"))
+        stop("Argument 'locDomain' must be of class SpatialPoints.")
       
       meshCoordinates <- private$getMeshKnots()
-      locDomain <- SpaceTime::nullScale(locDomain, self$getScale())
+      locDomain <- SpaceTimeModels::nullScale(sp::coordinates(locDomain), self$getScale())
       private$mesh <- inla.mesh.2d(loc=meshCoordinates,
                                    loc.domain=locDomain,
-                                   cutoff=SpaceTime::nullScale(cutoff, self$getScale()),
-                                   max.edge=SpaceTime::nullScale(maxEdge, self$getScale()),
-                                   offset=SpaceTime::nullScale(offset, self$getScale()),
+                                   cutoff=SpaceTimeModels::nullScale(cutoff, self$getScale()),
+                                   max.edge=SpaceTimeModels::nullScale(maxEdge, self$getScale()),
+                                   offset=SpaceTimeModels::nullScale(offset, self$getScale()),
                                    min.angle=minAngle)
       
       return(invisible(self))
