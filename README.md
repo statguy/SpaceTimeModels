@@ -1,6 +1,5 @@
----
-output: pdf_document
----
+[PDF](https://github.com/statguy/SpaceTimeModels/blob/master/README.pdf) (Please read the PDF to see the equations.)
+
 # SpaceTimeModels - An interface for fitting parametric spatial and spatio-temporal models with R and INLA
 
 ## Introduction
