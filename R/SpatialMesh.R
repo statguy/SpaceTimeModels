@@ -27,8 +27,6 @@ SpatialMesh <- R6::R6Class(
                                    max.edge=SpaceTimeModels::nullScale(maxEdge, self$getScale()),
                                    offset=SpaceTimeModels::nullScale(offset, self$getScale()),
                                    min.angle=minAngle)
-      
-      return(invisible(self))
     }
   ),
   public = list(
