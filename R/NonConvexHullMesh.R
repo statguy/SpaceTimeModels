@@ -11,14 +11,12 @@ NonConvexHullMesh <- R6::R6Class(
   "NonConvexHullMesh",
   inherit = SpaceTimeModels::Mesh,
   private = list(
-  ),
-  public = list(
     construct = function(cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, convex) {
       if (missing(cutoff))
         stop("Required argument 'cutoff' missing.")
       if (missing(maxEdge))
         stop("Required argument 'maxEdge' missing.")
-          
+      
       meshCoordinates <- private$getMeshKnots()
       boundary <- inla.nonconvex.hull(points=meshCoordinates, convex=convex)
       private$mesh <- inla.mesh.2d(boundary=boundary,
@@ -28,6 +26,12 @@ NonConvexHullMesh <- R6::R6Class(
                                    min.angle=minAngle)
       
       return(invisible(self))
+    }
+  ),
+  public = list(
+    initialize = function(..., cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, convex) {
+      super$initialize(...)
+      private$construct(cutoff=cutoff, maxEdge=maxEdge, offset=offset, minAngle=minAngle, convex=convex)
     }
   )
 )

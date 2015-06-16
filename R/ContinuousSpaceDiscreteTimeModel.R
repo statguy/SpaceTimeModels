@@ -16,16 +16,13 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     }
   ),
   public = list(
-    addObservationStack = function(stdf, response=NA, covariates, offset, offsetScale=1, tag="obs") {
+    addObservationStack = function(sp, response=NA, covariates, offset, tag="obs") {
       # TODO: allow defining link function
       
-      if (missing(stdf))
-        stop("Required argument 'stdf' missing.")
-      if (!inherits(stdf, "STI"))
-        stop("Argument 'stdf' must be of class 'STI'.")
-      
-      #if (missing(time))
-      #  stop("Required argument 'time' missing.")
+      if (missing(sp))
+        stop("Required argument 'sp' missing.")
+      if (!inherits(sp, "STI"))
+        stop("Argument 'sp' must be of class 'STI'.")
       
       if (is.null(self$getSpatialMesh()))
         stop("Mesh must be defined first.")
@@ -34,18 +31,14 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       if (is.null(private$covariatesModel))
         stop("Covariates model must be defined first.")
       #if (missing(coordinates)) coordinates <- model$getSpatialMesh()$getKnots()
-
+      
       dataList <- list(response=response)
-      if (!missing(offset)) {
-        private$offsetScale <- offsetScale
-        dataList$E <- offset / private$offsetScale
-      }
+      if (!missing(offset)) dataList$E <- offset / self$getOffsetScale()
 
-      #coordinates <- private$scaleCoordinates(coordinates)
-      coordinates <- private$scaleCoordinates(sp::coordinates(stdf))
+      coordinates <- private$scaleCoordinates(sp::coordinates(sp))
       SpaceTimeModels::assertCompleteCovariates(private$covariatesModel, covariates)
       modelMatrix <- SpaceTimeModels::getINLAModelMatrix(private$covariatesModel, covariates)
-      time <- time(stdf)
+      time <- time(sp)
       timeIndex <- time - min(time) + 1
       nTime <- length(unique(timeIndex))
       fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde, n.group=nTime)
@@ -62,15 +55,15 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       
       return(invisible(self))
     },
-        
-    addPredictionStack = function(stdf, response=NA, covariates, offset, offsetScale, tag="pred") {
+    
+    addPredictionStack = function(sp, response=NA, covariates, tag="pred") {
       # TODO: finish this function
       
-      if (missing(stdf))
-        stop("Required argument 'stdf' missing.")
-      if (!inherits(stdf, "STI"))
-        stop("Argument 'stdf' must be of class 'STI'.")
-      coordinates <- sp::coordinates(stdf)
+      if (missing(sp))
+        stop("Required argument 'sp' missing.")
+      if (!inherits(sp, "STI"))
+        stop("Argument 'sp' must be of class 'STI'.")
+      coordinates <- sp::coordinates(sp)
       
       effects <- if (private$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(index, coordinates))
       AList <- if (!is.null(modelMatrix)) {

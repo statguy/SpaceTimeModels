@@ -12,6 +12,10 @@ Mesh <- R6::R6Class(
     crs = NULL,
     
     getMeshKnots = function() return(unique(private$knots) / self$getScale())
+    
+    #construct = function() {
+    #  stop("Unimplemented abstract method 'construct'.")
+    #}
   ),
   public = list(
     initialize = function(knots, knotsScale=1) {
@@ -30,10 +34,6 @@ Mesh <- R6::R6Class(
     getScaledKnots = function() return(sp::SpatialPoints(private$knots / self$getScale(), proj4string=self$getCRS())),
     getINLAMesh = function() return(private$mesh),
     getCRS = function() return(private$crs),
-    
-    construct = function(...) {
-      stop("Unimplemented abstract method 'construct'.")
-    },
     
     plot = function() {
       if (is.null(private$mesh))

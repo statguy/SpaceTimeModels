@@ -105,7 +105,7 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))        
     },
     
-    addObservationStack = function(sp, response=NA, covariates, offset, offsetScale=1, tag="obs") {
+    addObservationStack = function(sp, response=NA, covariates, offset, tag="obs") {
       # TODO: allow defining link function
       
       if (is.null(self$getSpatialMesh()))
@@ -121,11 +121,8 @@ ContinuousSpaceModel <- R6::R6Class(
         stop("Argument 'sp' must be of class 'SpatialPoints'.")
         
       dataList <- list(response=response)
-      if (!missing(offset)) {
-        private$offsetScale <- offsetScale
-        dataList$E <- offset / private$offsetScale
-      }
-      
+      if (!missing(offset)) dataList$E <- offset / self$getOffsetScale()
+
       coordinates <- private$scaleCoordinates(sp::coordinates(sp))
       SpaceTimeModels::assertCompleteCovariates(private$covariatesModel, covariates)
       modelMatrix <- SpaceTimeModels::getINLAModelMatrix(private$covariatesModel, covariates)
@@ -144,7 +141,11 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))
     },
     
-    addPredictionStack = function(sp, response=NA, covariates, offset, offsetScale, tag="pred") {
+    addValidationStack = function(sp, response=NA, covariates, offset,tag="val") {
+      self$addObservationStack(sp=sp, response=response, covariates=covariates, offset=offset, tag=tag)
+    },
+    
+    addPredictionStack = function(sp, response=NA, covariates, tag="pred") {
       # TODO: finish this function
       
       if (missing(sp))

@@ -8,11 +8,9 @@
 #' @exportClass SpatialMesh
 #' @export SpatialMesh
 SpatialMesh <- R6::R6Class(
-  "TwoDMesh",
+  "SpatialMesh",
   inherit = SpaceTimeModels::Mesh,
   private = list(
-  ),
-  public = list(
     construct = function(cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, locDomain=NULL) {
       if (missing(cutoff))
         stop("Required argument 'cutoff' missing.")
@@ -31,6 +29,12 @@ SpatialMesh <- R6::R6Class(
                                    min.angle=minAngle)
       
       return(invisible(self))
+    }
+  ),
+  public = list(
+    initialize = function(..., cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, locDomain=NULL) {
+      super$initialize(...)
+      private$construct(cutoff=cutoff, maxEdge=maxEdge, offset=offset, minAngle=minAngle, locDomain=locDomain)
     }
   )
 )

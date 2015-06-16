@@ -131,23 +131,17 @@ which INLA handles better.
 
 Spatial mesh object is obtained, for example, with
 ```
-mesh <- SpaceTimeModels::NonConvexHullMesh$new(knots = knots)
+mesh <- SpaceTimeModels::SpatialMesh$new(knots=knots, locDomain=borders, offset=c(10, 140), maxEdge=c(50, 1000), minAngle=c(26, 21), cutoff=0)
 ```
 where `knots` provides coordinates for constructing the mesh. The `knots` object must be class of `SpatialPoints`
-from the `sp` package.
-<!-- Coordinates in the variables `x` and `y` are provided for the constructor via the argument `knots`
-that stores the coordinates in the mesh object for future use. -->
-
-The mesh is specified with the `construct` method and depending on the type of the mesh, several
-parameters are needed to be supplied for the method that specify topology of the mesh. The parameters
-affect, for example, the number of nodes in the mesh.
-The mesh is found by a triangulation over the study area and the process should be completed rather
-quickly.
+from the `sp` package. Rest of the arguments specify topology of the mesh and are specific to type of the mesh.
+The arguments affect, for example, number of the nodes in the mesh.
+The mesh is found by a triangulation over the study area and the process should be completed rather quickly.
 However, the triangulation gets stuck sometimes and the INLA triangulation process or R has to be
 force-terminated (killed).
 A set of suitable mesh parameters is often found through iteration. It is adviced to run the models
-with s small number of mesh nodes first, especially with the spatio-temporal models, which may take
-very long time to estimate with large meshes.
+with a small number of mesh nodes first, especially with the spatio-temporal models, which may take
+relatively long time to estimate with large meshes.
 
 The mesh parameters are listed in the help (which is obtained with R command `?x`
 where `x` is the class name, e.g. `?NonConvexHullMesh`) and explained in more detail in
@@ -197,15 +191,15 @@ offsets for count data. The following methods specify the data:
 - `addValidationStack`
 - `addPredictionStack`
 
-For spatio-temporal data, each of the methods take in the `spdf` argument, which must be of class
+For spatio-temporal data, each of the methods take in the `sp` argument, which must be of class
 `STI` or `STIDF` from the `spacetime` package. For spatial data, the `sp` argument must be provided
 with an object of class `SpatialPoints` or `SpatialPointsDataFrame` from the `sp` package.
 
 For example
 ```
-model$addObservationStack(spdf=obs, response=obs@data$response, offset=obs@data$offset, covariates=obs@data, tag="obs")
-model$addValidationStack(stdf=val, covariates=val@data, tag="val")
-model$addPredictionStack(stdef=pred, covariates=pred@data, tag="pred")
+model$addObservationStack(sp=obs, response=obs@data$response, offset=obs@data$offset, covariates=obs@data, tag="obs")
+model$addValidationStack(sp=val, covariates=val@data, tag="val")
+model$addPredictionStack(sp=pred, covariates=pred@data, tag="pred")
 ```
 
 TODO

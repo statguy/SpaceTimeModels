@@ -17,6 +17,10 @@ SpaceModel <- R6::R6Class(
     }
   ),
   public = list(
+    initialize = function(offsetScale=1, ...) {
+      private$offsetScale <- offsetScale
+    },
+    
     getDistanceUnit = function() return(distanceUnit),
     getOffsetScale = function() return(private$offsetScale),
     getLikelihood = function() return(private$likelihood),
