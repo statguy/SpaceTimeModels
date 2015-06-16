@@ -45,7 +45,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       coordinates <- private$scaleCoordinates(sp::coordinates(stdf))
       SpaceTimeModels::assertCompleteCovariates(private$covariatesModel, covariates)
       modelMatrix <- SpaceTimeModels::getINLAModelMatrix(private$covariatesModel, covariates)
-      time <- as.integer(stdf@time)
+      time <- time(stdf)
       timeIndex <- time - min(time) + 1
       nTime <- length(unique(timeIndex))
       fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde, n.group=nTime)
