@@ -21,8 +21,8 @@ Mesh <- R6::R6Class(
         stop("Argument 'knots' must be of class 'SpatialPoints'.")
       private$knotsScale <- knotsScale
       #private$knots <- as.matrix(knots)
-      private$knots <- sp::coordinates(obs)
-      private$crs <- sp::CRS(sp::proj4string(obs))
+      private$knots <- sp::coordinates(knots)
+      private$crs <- sp::CRS(sp::proj4string(knots))
     },
     
     getScale = function() return(private$knotsScale),
