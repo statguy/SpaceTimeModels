@@ -21,7 +21,7 @@ Mesh <- R6::R6Class(
     initialize = function(knots, knotsScale=1) {
       if (missing(knots))
         stop("Required argument 'knots' missing.")
-      if (!inherits(knots, "SpatialPoints", "ST"))
+      if (!inherits(knots, c("SpatialPoints", "ST")))
         stop("Argument 'knots' must be of class 'SpatialPoints' or 'ST'.")
       private$knotsScale <- knotsScale
       #private$knots <- as.matrix(knots)
