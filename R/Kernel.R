@@ -24,7 +24,9 @@ Kernel <- R6::R6Class(
       private$kernel <- private$constructKernelInternal(private$scaledRadius, rasterScale)
       return(invisible(self))
     },
-        
+      
+    getScale = function() return(private$scale),
+    getResolution = function() return(private$resolution),
     getScaledRadius = function() return(private$scaledRadius),
     asMatrix = function() return(private$kernel)
   )
