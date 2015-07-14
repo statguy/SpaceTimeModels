@@ -17,7 +17,7 @@ Kernel <- R6::R6Class(
   ),
   public = list(
     constructKernel = function(resolution, scale) {
-      private$resolution <- if (inherits(resolution, "RasterLayer")) raster::res(raster)[1] else resolution
+      private$resolution <- if (inherits(resolution, "RasterLayer")) raster::res(resolution)[1] else resolution
       private$scale = scale
       rasterScale <- private$scale / private$resolution
       private$scaledRadius <- round(private$scale / private$resolution)
