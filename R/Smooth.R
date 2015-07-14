@@ -2,12 +2,12 @@
 #' @author Jussi Jousimo \email{jvj@@iki.fi}
 #' @export smoothDiscreteSubset
 #' @keywords internal
-smoothDiscreteSubset <- function(r, x, y, kernel, scale, smoothValues, edgeValues) {
+smoothDiscreteSubset <- function(r, x, y, kernel, smoothValues, edgeValues) {
   col <- colFromX(r, x)
   row <- rowFromY(r, y)  
   if (r[row, col] %in% edgeValues || is.na(r[row, col])) {
     warning("The point is outside the effective area. The smoothing cannot be proceeded.")
-    return(data.frame(x=x, y=y, scale=scale, value=NA))
+    return(data.frame(x=x, y=y, scale=kernel$getScale(), value=NA))
   }
   
   k <- kernel$asMatrix()
@@ -17,10 +17,10 @@ smoothDiscreteSubset <- function(r, x, y, kernel, scale, smoothValues, edgeValue
   startCol <- max(0, col-kernelRadius1) + 1
   nrows <- min(dim(r)[1]+1, row+kernelRadius1) - startRow
   ncols <- min(dim(r)[2]+1, col+kernelRadius1) - startCol
-  xmin <- startRow - (row-kernelRadius1) - 1
-  ymin <- startCol - (col-kernelRadius1) - 1
-  if (!(dim(k)[1] == nrows+xmin & dim(k)[2] == ncols+ymin)) {
-    message("Cut kernel ", dim(k)[1], " X ", dim(k)[2], " to ", nrows+xmin, " X ", ncols+ymin)
+  xmin <- startRow + (row-kernelRadius1) - 1
+  ymin <- startCol + (col-kernelRadius1) - 1
+  if (!(dim(k)[1] == nrows & dim(k)[2] == ncols)) {
+    #message("Cut kernel ", dim(k)[1], " X ", dim(k)[2], " to ", nrows, " X ", ncols)
     k <- k[1:nrows+xmin, 1:ncols+ymin]
   }
   
@@ -34,7 +34,7 @@ smoothDiscreteSubset <- function(r, x, y, kernel, scale, smoothValues, edgeValue
   smoothMaskRaster <- edgeRaster %in% smoothValues
   # Find convolution
   smoothValue <- sum(k * processRaster, na.rm=T)
-  x <- data.frame(x=x, y=y, scale=scale, value=smoothValue)
+  x <- data.frame(x=x, y=y, scale=kernel$getScale(), value=smoothValue)
   return(x)
 }
 
@@ -76,7 +76,7 @@ smoothDiscreteSubsets <- function(r, coords, kernel, scales, processValues, edge
     message("Kernel size = ", dim(kernel$asMatrix())[1], " X ", dim(kernel$asMatrix())[2])
     smoothPixels <- plyr::ldply(1:n.coords, function(i, coords, n.coords, scale, kernel) {
       message("Smoothing scale = ", scale, ", for coord = ", i, "/", n.coords, " (", coords[i,1], ",", coords[i,2], ")")
-      x <- smoothDiscreteSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, scale, processValues=processValues, edgeValues=edgeValues)
+      x <- smoothDiscreteSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, processValues=processValues, edgeValues=edgeValues)
       return(x)
     }, coords=coords, n.coords=n.coords, scale=scale, kernel=kernel, .parallel=.parallel) # Inner loop parallel strategy slower for small kernels, but faster for big kernels
     return(smoothPixels)
@@ -90,12 +90,12 @@ smoothDiscreteSubsets <- function(r, coords, kernel, scales, processValues, edge
 #' @author Jussi Jousimo \email{jvj@@iki.fi}
 #' @export smoothContinuousSubset
 #' @keywords internal
-smoothContinuousSubset <- function(r, x, y, kernel, scale, edgeValues=c()) {
+smoothContinuousSubset <- function(r, x, y, kernel, edgeValues=c()) {
   col <- colFromX(r, x)
   row <- rowFromY(r, y)  
   if (r[row, col] %in% edgeValues || is.na(r[row, col])) {
     warning("The point is outside the effective area. The smoothing cannot be proceeded.")
-    return(data.frame(x=x, y=y, scale=scale, value=NA))
+    return(data.frame(x=x, y=y, scale=kernel$getScale(), value=NA))
   }
   
   k <- kernel$asMatrix()
@@ -107,8 +107,8 @@ smoothContinuousSubset <- function(r, x, y, kernel, scale, edgeValues=c()) {
   ncols <- min(dim(r)[2]+1, col+kernelRadius1) - startCol
   xmin <- startRow - (row-kernelRadius1) - 1
   ymin <- startCol - (col-kernelRadius1) - 1
-  if (!(dim(k)[1] == nrows+xmin & dim(k)[2] == ncols+ymin)) {
-    message("Cut kernel ", dim(k)[1], " X ", dim(k)[2], " to ", nrows+xmin, " X ", ncols+ymin)
+  if (!(dim(k)[1] == nrows & dim(k)[2] == ncols)) {
+    message("Cut kernel ", dim(k)[1], " X ", dim(k)[2], " to ", nrows, " X ", ncols)
     k <- k[1:nrows+xmin, 1:ncols+ymin]
   }
   
@@ -120,7 +120,7 @@ smoothContinuousSubset <- function(r, x, y, kernel, scale, edgeValues=c()) {
   k <- k / sum(k)
   # Find convolution
   smoothValue <- sum(k * processRaster, na.rm=T)
-  x <- data.frame(x=x, y=y, scale=scale, value=smoothValue)
+  x <- data.frame(x=x, y=y, scale=kernel$getScale(), value=smoothValue)
   return(x)
 }
 
@@ -162,7 +162,7 @@ smoothContinuousSubsets <- function(r, coords, kernel, scales, edgeValues=c(), w
     message("Kernel size = ", dim(kernel$asMatrix())[1], " X ", dim(kernel$asMatrix())[2])
     smoothPixels <- plyr::ldply(1:n.coords, function(i, coords, n.coords, scale, kernel) {
       message("Smoothing scale = ", scale, ", for coord = ", i, "/", n.coords, " (", coords[i,1], ",", coords[i,2], ")")
-      x <- smoothContinuousSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, scale, edgeValues=edgeValues)
+      x <- smoothContinuousSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, edgeValues=edgeValues)
       return(x)
     }, coords=coords, n.coords=n.coords, scale=scale, kernel=kernel, .parallel=.parallel)
     return(smoothPixels)
