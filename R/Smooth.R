@@ -25,7 +25,7 @@ smoothDiscreteSubset <- function(r, x, y, kernel, smoothValues, edgeValues) {
   }
   
   # Get edges and process values around the specified point that matches the size of the kernel
-  edgeRaster <- raster::getValuesBlock(r, startRow, nrows, startCol, ncols)
+  edgeRaster <- raster::getValuesBlock(r, startRow, nrows, startCol, ncols, format='matrix')
   # Set kernel zero at edges for edge correction
   k[edgeRaster %in% edgeValues | is.na(edgeRaster)] <- 0
   # Rescale kernel to constraint smooth values between 0...1
@@ -38,6 +38,7 @@ smoothDiscreteSubset <- function(r, x, y, kernel, smoothValues, edgeValues) {
   return(x)
 }
 
+#' @title Smooth subset of discrete 3D data
 #' @import raster
 #' @author Jussi Jousimo \email{jvj@@iki.fi}
 #' @export smoothDiscreteSubsets
@@ -76,7 +77,7 @@ smoothDiscreteSubsets <- function(r, coords, kernel, scales, processValues, edge
     message("Kernel size = ", dim(kernel$asMatrix())[1], " X ", dim(kernel$asMatrix())[2])
     smoothPixels <- plyr::ldply(1:n.coords, function(i, coords, n.coords, scale, kernel) {
       message("Smoothing scale = ", scale, ", for coord = ", i, "/", n.coords, " (", coords[i,1], ",", coords[i,2], ")")
-      x <- smoothDiscreteSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, processValues=processValues, edgeValues=edgeValues)
+      x <- SpaceTimeModels::smoothDiscreteSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, processValues=processValues, edgeValues=edgeValues)
       return(x)
     }, coords=coords, n.coords=n.coords, scale=scale, kernel=kernel, .parallel=.parallel) # Inner loop parallel strategy slower for small kernels, but faster for big kernels
     return(smoothPixels)
@@ -108,12 +109,12 @@ smoothContinuousSubset <- function(r, x, y, kernel, edgeValues=c()) {
   xmin <- startRow - (row-kernelRadius1) - 1
   ymin <- startCol - (col-kernelRadius1) - 1
   if (!(dim(k)[1] == nrows & dim(k)[2] == ncols)) {
-    message("Cut kernel ", dim(k)[1], " X ", dim(k)[2], " to ", nrows, " X ", ncols)
+    #message("Cut kernel ", dim(k)[1], " X ", dim(k)[2], " to ", nrows, " X ", ncols)
     k <- k[1:nrows+xmin, 1:ncols+ymin]
   }
   
   # Get edges and process values around the specified point that matches the size of the kernel
-  processRaster <- raster::getValuesBlock(r, startRow, nrows, startCol, ncols)
+  processRaster <- raster::getValuesBlock(r, startRow, nrows, startCol, ncols, format='matrix')
   # Set kernel zero at edges for edge correction
   k[processRaster %in% edgeValues | is.na(processRaster)] <- 0
   # Rescale kernel to constraint smooth values between 0...1
@@ -124,6 +125,7 @@ smoothContinuousSubset <- function(r, x, y, kernel, edgeValues=c()) {
   return(x)
 }
 
+#' @title Smooth subset of continuous 3D data
 #' @import raster
 #' @author Jussi Jousimo \email{jvj@@iki.fi}
 #' @export smoothContinuousSubsets
@@ -162,7 +164,8 @@ smoothContinuousSubsets <- function(r, coords, kernel, scales, edgeValues=c(), w
     message("Kernel size = ", dim(kernel$asMatrix())[1], " X ", dim(kernel$asMatrix())[2])
     smoothPixels <- plyr::ldply(1:n.coords, function(i, coords, n.coords, scale, kernel) {
       message("Smoothing scale = ", scale, ", for coord = ", i, "/", n.coords, " (", coords[i,1], ",", coords[i,2], ")")
-      x <- smoothContinuousSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, edgeValues=edgeValues)
+      x <- SpaceTimeModels::smoothContinuousSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, edgeValues=edgeValues)
+      #x <- smoothContinuousSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, edgeValues=edgeValues)
       return(x)
     }, coords=coords, n.coords=n.coords, scale=scale, kernel=kernel, .parallel=.parallel)
     return(smoothPixels)
