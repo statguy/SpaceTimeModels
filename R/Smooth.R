@@ -76,7 +76,7 @@ smoothDiscreteSubsets <- function(r, coords, kernel, scales, processValues, edge
     message("Kernel size = ", dim(kernel$asMatrix())[1], " X ", dim(kernel$asMatrix())[2])
     smoothPixels <- plyr::ldply(1:n.coords, function(i, coords, n.coords, scale, kernel) {
       message("Smoothing scale = ", scale, ", for coord = ", i, "/", n.coords, " (", coords[i,1], ",", coords[i,2], ")")
-      x <- .smoothDiscreteSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, scale, processValues=processValues, edgeValues=edgeValues)
+      x <- smoothDiscreteSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, scale, processValues=processValues, edgeValues=edgeValues)
       return(x)
     }, coords=coords, n.coords=n.coords, scale=scale, kernel=kernel, .parallel=.parallel) # Inner loop parallel strategy slower for small kernels, but faster for big kernels
     return(smoothPixels)
@@ -162,7 +162,7 @@ smoothContinuousSubsets <- function(r, coords, kernel, scales, edgeValues=c(), w
     message("Kernel size = ", dim(kernel$asMatrix())[1], " X ", dim(kernel$asMatrix())[2])
     smoothPixels <- plyr::ldply(1:n.coords, function(i, coords, n.coords, scale, kernel) {
       message("Smoothing scale = ", scale, ", for coord = ", i, "/", n.coords, " (", coords[i,1], ",", coords[i,2], ")")
-      x <- .smoothContinuousSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, scale, edgeValues=edgeValues)
+      x <- smoothContinuousSubset(r=r, x=coords[i,1], y=coords[i,2], kernel=kernel, scale, edgeValues=edgeValues)
       return(x)
     }, coords=coords, n.coords=n.coords, scale=scale, kernel=kernel, .parallel=.parallel)
     return(smoothPixels)
