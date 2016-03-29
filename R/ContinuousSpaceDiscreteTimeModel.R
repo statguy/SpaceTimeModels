@@ -9,6 +9,7 @@
 #' @export ContinuousSpaceDiscreteTimeModel
 ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
   "ContinuousSpaceDiscreteTimeModel",
+  lock_objects = FALSE,
   inherit = SpaceTimeModels::ContinuousSpaceTimeModel,
   private = list(
     getRandomEffectTerm = function() {

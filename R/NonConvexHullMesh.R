@@ -9,6 +9,7 @@
 #' @export NonConvexHullMesh
 NonConvexHullMesh <- R6::R6Class(
   "NonConvexHullMesh",
+  lock_objects = FALSE,
   inherit = SpaceTimeModels::Mesh,
   private = list(
     construct = function(cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, convex) {

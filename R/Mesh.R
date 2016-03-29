@@ -5,6 +5,7 @@
 #' @keywords internal
 Mesh <- R6::R6Class(
   "Mesh",
+  lock_objects = FALSE,
   private = list(
     knotsScale = NULL,
     knots = NULL,

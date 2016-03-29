@@ -5,6 +5,7 @@
 #' @keywords internal
 SpaceModel <- R6::R6Class(
   "SpaceModel",
+  lock_objects = FALSE,
   private = list(
     offsetScale = 1,
     covariatesModel = NULL,
@@ -54,6 +55,9 @@ SpaceModel <- R6::R6Class(
     load = function(fileName) {
       load(fileName, env=self)
       return(invisible(self))
+      #tempEnv <- new.env()
+      #load(fileName, env=tempEnv)
+      #return(invisible(tempEnv$self))
     },
 
     summary = function() {

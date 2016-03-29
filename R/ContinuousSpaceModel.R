@@ -10,6 +10,7 @@
 #' @keywords internal
 ContinuousSpaceModel <- R6::R6Class(
   "ContinuousSpaceModel",
+  lock_objects = FALSE,
   inherit = SpaceTimeModels::SpaceModel,
   private = list(
     spaceMesh = NULL,

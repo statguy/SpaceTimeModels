@@ -9,6 +9,7 @@
 #' @export SpatialMesh
 SpatialMesh <- R6::R6Class(
   "SpatialMesh",
+  lock_objects = FALSE,
   inherit = SpaceTimeModels::Mesh,
   private = list(
     construct = function(cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, locDomain=NULL) {
