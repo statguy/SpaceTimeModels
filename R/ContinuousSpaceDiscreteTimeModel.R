@@ -102,15 +102,15 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       return(invisible(self))
     },
     
-    getFitted = function() {
-      indexObserved <- inla.stack.index(private$fullStack, "obs")$data
-      fitted <- private$result$summary.fitted.values$mean[indexObserved] * private$offsetScale
-      return(fitted)      
-    },
+    #getFitted = function() {
+    #  indexObserved <- inla.stack.index(private$fullStack, "obs")$data
+    #  fitted <- private$result$summary.fitted.values$mean[indexObserved] * private$offsetScale
+    #  return(fitted)      
+    #},
     
     summaryTemporalVariation = function() {
-      observed <- private$response / private$offset * private$offsetScale
-      fitted <- self$getFitted()
+      observed <- self$getObserved()
+      fitted <- self$getFittedResponse()$responseMean
       x <- data.frame(time=private$time, observed=observed, fitted=fitted)
       x <- ddply(x, .(time), function(x) data.frame(observed=sum(x$observed), fitted=sum(x$fitted)))
       print(x)
@@ -118,8 +118,8 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     },
     
     plotTemporalVariation = function() {
-      observed <- private$response / private$offset * private$offsetScale
-      fitted <- self$getFitted()
+      observed <- self$getObserved()
+      fitted <- self$getFittedResponse()$responseMean
       x <- data.frame(time=private$time, observed=observed, fitted=fitted)
       x <- ddply(x, .(time), function(x) data.frame(observed=sum(x$observed), fitted=sum(x$fitted)))
       x <- melt(x, id.vars="time", measure.vars=c("observed", "fitted"))

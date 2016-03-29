@@ -141,7 +141,7 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))
     },
     
-    addValidationStack = function(sp, response=NA, covariates, offset,tag="val") {
+    addValidationStack = function(sp, response=NA, covariates, offset, tag="val") {
       self$addObservationStack(sp=sp, response=response, covariates=covariates, offset=offset, tag=tag)
     },
     
@@ -181,10 +181,25 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))
     },
 
-    getFittedResponse = function(tag="obs") {
-      index <- inla.stack.index(self$getFullStack(), tag)$data
+    getIndex = function(tag="obs") {
+      inla.stack.index(self$getFullStack(), tag)$data
+    },
+    
+    getOffset = function(tag="obs") {
+      index <- self$getIndex(tag)
       offset <- inla.stack.LHS(self$getFullStack())$E[index]
       if (is.null(offset)) offset <- 1
+      offset
+    },
+
+    getObserved = function(tag="obs") {
+      index <- self$getIndex(tag)
+      inla.stack.LHS(self$getFullStack())$response[index]
+    },
+
+    getFittedResponse = function(tag="obs") {
+      index <- self$getIndex(tag)
+      offset <- self$getOffset(tag)
       data <- list()
       data$responseMean <- self$getResult()$summary.fitted.values$mean[index] * offset
       data$responseSd <- self$getResult()$summary.fitted.values$sd[index] * offset
@@ -192,7 +207,7 @@ ContinuousSpaceModel <- R6::R6Class(
     },
     
     getFittedLinearPredictor = function(tag="obs") {
-      index <- inla.stack.index(self$getFullStack(), tag)$data
+      index <- self$getIndex(tag)
       data <- list()
       data$etaMean <- self$getResult()$summary.linear.predictor$mean[index]
       data$etaSd <- self$getResult()$summary.linear.predictor$sd[index]
@@ -203,6 +218,7 @@ ContinuousSpaceModel <- R6::R6Class(
       data <- list()
       data$spatialMean <- self$getResult()$summary.random$spatial$mean
       data$spatialSd <- self$getResult()$summary.random$spatial$sd
+      # location, year
       return(as.data.frame(data))
     }
   )

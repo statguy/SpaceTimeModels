@@ -1,8 +1,8 @@
 Package: SpaceTimeModels
 Type: Package
 Title: An interface for fitting parametric spatial and spatio-temporal models
-Version: 0.1.02
-Date: 2015-06-12
+Version: 0.1.3
+Date: 2016-03-29
 Author: Jussi Jousimo
 Maintainer: Jussi Jousimo <jvj@iki.fi>
 Description: An interface for fitting parametric spatial and spatio-temporal models

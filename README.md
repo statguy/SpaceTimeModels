@@ -9,9 +9,9 @@ the equations properly.)
 ## Introduction
 
 The `SpaceTimeModels` [R](http://www.r-project.org/) package provides a simplified interface for parametrizing
-a few standard spatial and spatio-temporal models with [R-INLA](http://www.r-inla.org/). The models enable
-parametric (ie. the parameters are estimated from the data) smoothing over space and time and determining
-the effect of covariates on response.
+a few "standard" spatial and spatio-temporal models with [R-INLA](http://www.r-inla.org/). The models enable
+parametric (ie. the unknown parameters are estimated from the data) smoothing over space and time and
+quantifying effect of covariates on response.
 
 ### Autocorrelation
 

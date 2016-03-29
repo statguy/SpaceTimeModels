@@ -61,7 +61,11 @@ SpaceModel <- R6::R6Class(
       return(invisible(self))
     },
 
-    getFittedResponse = function(tab="obs") {
+    getObserved = function(tag="obs") {
+      stop("Unimplemented abstract method 'getFittedObserved'.")
+    },
+    
+    getFittedResponse = function(tag="obs") {
       stop("Unimplemented abstract method 'getFittedResponse'.")
     },
     
