@@ -86,7 +86,7 @@ details of the autoregressive and the Besag models.
 
 ## Installation
 
-Test version of R-INLA is required to be installed first, see [http://www.r-inla.org/download](here) for
+Test version of R-INLA is required to be installed first, see [here](http://www.r-inla.org/download) for
 the installation instructions. The `SpaceTimeModels` package is installed with the `devtools` package using
 the command `devtools::install_github("statguy/SpaceTimeModels")`. Additional packages are installed
 automatically from CRAN if needed. The package will be ready to use with the command
