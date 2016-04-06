@@ -35,6 +35,7 @@ Mesh <- R6::R6Class(
     getScaledKnots = function() return(sp::SpatialPoints(private$knots / self$getScale(), proj4string=self$getCRS())),
     getINLAMesh = function() return(private$mesh),
     getCRS = function() return(private$crs),
+    getNumNodes = function() return(self$getINLAMesh()$n),
     
     plot = function() {
       if (is.null(private$mesh))

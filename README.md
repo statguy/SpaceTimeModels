@@ -88,11 +88,13 @@ details of the autoregressive and the Besag models.
 
 Test version of R-INLA is required to be installed first, see [here](http://www.r-inla.org/download) for
 the installation instructions. The `SpaceTimeModels` package is installed with the `devtools` package using
-the command `devtools::install_github("statguy/SpaceTimeModels")`. Additional packages are installed
-automatically from CRAN if needed. The package will be ready to use with the command
+the commands
 ```
-library(SpaceTimeModels)
+library(devtools)
+devtools::install_github("statguy/SpaceTimeModels")
 ```
+Additional packages are installed automatically from CRAN if needed. The package will be ready to use with
+the command `library(SpaceTimeModels)`.
 
 ## Usage
 
@@ -253,6 +255,13 @@ Model selection can be performed with the same model object by respecifying the 
 for the continuous models the data stack needs to be reconstructed by first issuing the `clearStack()`
 method and then repeating the `add*Stack()` methods before estimation. The `summary()` method provides the
 [WAIC](http://www.stat.columbia.edu/~gelman/research/published/waic_understand3.pdf) measure for the model selection.
+
+### Saving and restoring model object
+
+Model object can be saved using the standard `save(model, file = fileName)` command to a file pointed by
+`fileName`. Previously saved state can be restored from a file using the `load(fileName)` command.
+Note that if you have updated the `SpaceTimeModels` package in between, the restored object has the
+properties of the old one.
 
 ## Examples
 

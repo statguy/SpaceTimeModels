@@ -39,9 +39,9 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       coordinates <- private$scaleCoordinates(sp::coordinates(sp))
       SpaceTimeModels::assertCompleteCovariates(private$covariatesModel, covariates)
       modelMatrix <- SpaceTimeModels::getINLAModelMatrix(private$covariatesModel, covariates)
-      time <- time(sp)
-      timeIndex <- time - min(time) + 1
-      nTime <- length(unique(timeIndex))
+      private$time <- time <- time(sp)
+      private$timeIndex <- timeIndex <- time - min(time) + 1
+      private$nTime <- nTime <- length(unique(timeIndex))
       fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde, n.group=nTime)
       A <- inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc=coordinates, group=timeIndex, n.group=nTime)
       
@@ -108,6 +108,24 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     #  fitted <- private$result$summary.fitted.values$mean[indexObserved] * private$offsetScale
     #  return(fitted)      
     #},
+    
+    getFittedResponse = function(tag="obs") {
+      index <- self$getIndex(tag)
+      offset <- self$getOffset(tag)
+      nodes <- self$getMesh()$getNumNodes()
+      data <- list()
+      data$responseMean <- inla.vector2matrix(self$getResult()$summary.fitted.values$mean[index] * offset, nrow = nodes, ncol = private$nTime)
+      colnames(data$responseMean) <- unique(private$time)
+      data$responseSd <- inla.vector2matrix(self$getResult()$summary.fitted.values$sd[index] * offset, nrow = nodes, ncol = private$nTime)
+      colnames(data$responseMean) <- unique(private$time)
+      return(data)
+    },
+    
+    getFittedLinearPredictor = function(tag="obs") {
+      index <- self$getIndex(tag)
+      data <- list()
+      return(data) 
+    },
     
     summaryTemporalVariation = function() {
       observed <- self$getObserved()

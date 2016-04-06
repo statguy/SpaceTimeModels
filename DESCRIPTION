@@ -10,7 +10,7 @@ License: BSD_2_clause + file LICENSE
 Depends:
   R (>= 3.0.0),
   INLA (>= 0.0-1428997066),
-  R6,
+  R6 (>= 2.1.0),
   sp,
   spacetime
 Suggests:
