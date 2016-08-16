@@ -12,7 +12,7 @@ ContinuousSpaceModel <- R6::R6Class(
   "ContinuousSpaceModel",
   lock_objects = FALSE,
   inherit = SpaceTimeModels::SpaceModel,
-  private = list(
+  public = list(
     spaceMesh = NULL,
     spde = NULL,
     fullStack = NULL,
@@ -26,29 +26,28 @@ ContinuousSpaceModel <- R6::R6Class(
     },
     
     hasIntercept = function() {
-      if (is.null(private$linearModel))
+      if (is.null(self$linearModel))
         stop("Linear model must be defined first.")
-      return("intercept" %in% attr(terms(private$linearModel), "term.labels"))
+      return("intercept" %in% attr(terms(self$linearModel), "term.labels"))
     },
     
     addStack = function(data, A, effects, tag) {
       obsStack <- inla.stack(data=data, A=A, effects=effects, tag=tag)
-      private$fullStack <- if (is.null(private$fullStack)) inla.stack(obsStack)
+      self$fullStack <- if (is.null(self$fullStack)) inla.stack(obsStack)
       else {
-        if (names(private$fullStack$data$index) == tag)
+        if (names(self$fullStack$data$index) == tag)
           stop("Stack with tag '", tag, "' already exists.")
-        inla.stack(private$fullStack, obsStack)
+        inla.stack(self$fullStack, obsStack)
       }
       return(invisible(self))
-    }
-  ),
-  public = list(
-    getSpatialMesh = function() return(private$spaceMesh),
-    getSPDEObject = function() return(private$spde),
-    getFullStack = function() return(private$fullStack),
+    },
+    
+    getSpatialMesh = function() return(self$spaceMesh),
+    getSPDEObject = function() return(self$spde),
+    getFullStack = function() return(self$fullStack),
     
     clearStack = function() {
-      private$fullStack <- NULL
+      self$fullStack <- NULL
       return(invisible(self))
     },
     
@@ -57,7 +56,7 @@ ContinuousSpaceModel <- R6::R6Class(
         stop("Argument 'mesh' must be of class 'Mesh'.")
       if (is.null(mesh$getINLAMesh()))
         stop("Mesh has not been initialized.")
-      private$spaceMesh <- mesh
+      self$spaceMesh <- mesh
       return(invisible(self))
     },
     
@@ -72,15 +71,15 @@ ContinuousSpaceModel <- R6::R6Class(
       if (attr(x, "response") != 0)
         stop("The covariates model formula must be right-sided.")
       
-      if (!is.null(private$covariatesModel)) {
+      if (!is.null(self$covariatesModel)) {
         warning("Covariates model has been respecified. To enable reuse of the model object, clearStack() method must be called and the data stack needs to be reconstructed.")
       }
       
-      private$covariatesModel <- covariatesModel
+      self$covariatesModel <- covariatesModel
       covariates <- colnames(getINLAModelMatrix(covariatesModel, covariates))
       intercept <- if (attr(x, "intercept")[1] == 0) NULL else "intercept"
-      randomEffect <- private$getRandomEffectTerm()
-      private$linearModel <- reformulate(termlabels=c(intercept, covariates, randomEffect), response="response", intercept=FALSE)
+      randomEffect <- self$getRandomEffectTerm()
+      self$linearModel <- reformulate(termlabels=c(intercept, covariates, randomEffect), response="response", intercept=FALSE)
       
       return(invisible(self))
     },
@@ -97,7 +96,7 @@ ContinuousSpaceModel <- R6::R6Class(
       else range0 <- range
       kappa0 <- sqrt(8) / range0
       tau0 <- 1 / (sqrt(4 * pi) * kappa0 * sigma0)
-      private$spde <- inla.spde2.matern(mesh=self$getSpatialMesh()$getINLAMesh(),
+      self$spde <- inla.spde2.matern(mesh=self$getSpatialMesh()$getINLAMesh(),
                                         B.tau=cbind(log(tau0), -1, +1),
                                         B.kappa=cbind(log(kappa0), 0, -1),
                                         theta.prior.mean=c(0, 0),
@@ -111,9 +110,9 @@ ContinuousSpaceModel <- R6::R6Class(
       
       if (is.null(self$getSpatialMesh()))
         stop("Mesh must be defined first.")
-      if (is.null(private$spde))
+      if (is.null(self$spde))
         stop("Spatial prior must be defined first.")
-      if (is.null(private$covariatesModel))
+      if (is.null(self$covariatesModel))
         stop("Covariates model must be defined first.")
       #if (missing(coordinates)) coordinates <- model$getSpatialMesh()$getKnots()
       if (missing(sp))
@@ -124,20 +123,20 @@ ContinuousSpaceModel <- R6::R6Class(
       dataList <- list(response=response)
       if (!missing(offset)) dataList$E <- offset / self$getOffsetScale()
 
-      coordinates <- private$scaleCoordinates(sp::coordinates(sp))
-      SpaceTimeModels::assertCompleteCovariates(private$covariatesModel, covariates)
-      modelMatrix <- SpaceTimeModels::getINLAModelMatrix(private$covariatesModel, covariates)
+      coordinates <- self$scaleCoordinates(sp::coordinates(sp))
+      SpaceTimeModels::assertCompleteCovariates(self$covariatesModel, covariates)
+      modelMatrix <- SpaceTimeModels::getINLAModelMatrix(self$covariatesModel, covariates)
       fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde)
       A <- inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc=coordinates)
       
-      effects <- if (private$hasIntercept()) list(c(fieldIndex, list(intercept=1))) else list(fieldIndex)
+      effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept=1))) else list(fieldIndex)
       AList <- if (!is.null(modelMatrix)) {
         effects[[2]] <- modelMatrix
         list(A, 1)
       }
       else list(A)
       
-      private$addStack(data=dataList, A=AList, effects=effects, tag=tag)
+      self$addStack(data=dataList, A=AList, effects=effects, tag=tag)
       
       return(invisible(self))
     },
@@ -153,16 +152,16 @@ ContinuousSpaceModel <- R6::R6Class(
         stop("Required argument 'sp' must be given.")
       if (!inherits(sp, "SpatialPoints"))
         stop("Argument 'sp' must be of class 'SpatialPoints'.")
-      coordinates <- private$scaleCoordinates(sp::coordinates(sp))
+      coordinates <- self$scaleCoordinates(sp::coordinates(sp))
       
-      effects <- if (private$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(index, coordinates))
+      effects <- if (self$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(index, coordinates))
       AList <- if (!is.null(modelMatrix)) {
         effects[[2]] <- modelMatrix
         list(A, 1)
       }
       else list(A)
       
-      private$addStack(data=dataList, A=AList, effects=effects, tag=tag)
+      self$addStack(data=dataList, A=AList, effects=effects, tag=tag)
       
       return(invisible(self))
     },
@@ -172,11 +171,12 @@ ContinuousSpaceModel <- R6::R6Class(
         stop("Data stack must be defined first.")
       
       dataStack <- inla.stack.data(self$getFullStack(), spde=self$getSPDEObject())
-      private$result <- try(inla(self$getLinearModel(), family=self$getLikelihood(), data=dataStack, E=dataStack$E,
+      self$result <- try(inla(self$getLinearModel(), family=self$getLikelihood(), data=dataStack, E=dataStack$E,
                                  control.predictor=list(A=inla.stack.A(self$getFullStack()), compute=TRUE), # link=dataStack$link
                                  control.compute=list(waic=TRUE, config=TRUE),
+                                 control.inla=list(reordering="metis"),
                                  verbose=verbose))
-      if (inherits(private$result, "try-error") || private$result$ok == FALSE)
+      if (inherits(self$result, "try-error") || self$result$ok == FALSE)
         stop("Estimation failed. Use verbose=TRUE to find the possible cause.")
       
       return(invisible(self))

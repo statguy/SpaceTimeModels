@@ -11,12 +11,11 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
   "ContinuousSpaceDiscreteTimeModel",
   lock_objects = FALSE,
   inherit = SpaceTimeModels::ContinuousSpaceTimeModel,
-  private = list(
+  public = list(
     getRandomEffectTerm = function() {
       return("f(spatial, model=spde, group=spatial.group, control.group=list(model=\"ar1\"))")
-    }
-  ),
-  public = list(
+    },
+    
     addObservationStack = function(sp, response=NA, covariates, offset, tag="obs") {
       # TODO: allow defining link function
       
@@ -29,30 +28,30 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
         stop("Mesh must be defined first.")
       if (is.null(self$getSPDEObject()))
         stop("Spatial prior must be defined first.")
-      if (is.null(private$covariatesModel))
+      if (is.null(self$covariatesModel))
         stop("Covariates model must be defined first.")
       #if (missing(coordinates)) coordinates <- model$getSpatialMesh()$getKnots()
       
       dataList <- list(response=response)
       if (!missing(offset)) dataList$E <- offset / self$getOffsetScale()
 
-      coordinates <- private$scaleCoordinates(sp::coordinates(sp))
-      SpaceTimeModels::assertCompleteCovariates(private$covariatesModel, covariates)
-      modelMatrix <- SpaceTimeModels::getINLAModelMatrix(private$covariatesModel, covariates)
-      private$time <- time <- time(sp)
-      private$timeIndex <- timeIndex <- time - min(time) + 1
-      private$nTime <- nTime <- length(unique(timeIndex))
+      coordinates <- self$scaleCoordinates(sp::coordinates(sp))
+      SpaceTimeModels::assertCompleteCovariates(self$covariatesModel, covariates)
+      modelMatrix <- SpaceTimeModels::getINLAModelMatrix(self$covariatesModel, covariates)
+      self$time <- time <- time(sp)
+      self$timeIndex <- timeIndex <- time - min(time) + 1
+      self$nTime <- nTime <- length(unique(timeIndex))
       fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde, n.group=nTime)
       A <- inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc=coordinates, group=timeIndex, n.group=nTime)
       
-      effects <- if (private$hasIntercept()) list(c(fieldIndex, list(intercept=1))) else list(fieldIndex)
+      effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept=1))) else list(fieldIndex)
       AList <- if (!is.null(modelMatrix)) {
         effects[[2]] <- modelMatrix
         list(A, 1)
       }
       else list(A)
       
-      private$addStack(data=dataList, A=AList, effects=effects, tag=tag)
+      self$addStack(data=dataList, A=AList, effects=effects, tag=tag)
       
       return(invisible(self))
     },
@@ -66,22 +65,22 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
         stop("Argument 'sp' must be of class 'STI'.")
       coordinates <- sp::coordinates(sp)
       
-      effects <- if (private$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(index, coordinates))
+      effects <- if (self$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(index, coordinates))
       AList <- if (!is.null(modelMatrix)) {
         effects[[2]] <- modelMatrix
         list(A, 1)
       }
       else list(A)
       
-      private$addStack(data=dataList, A=AList, effects=effects, tag=tag)
+      self$addStack(data=dataList, A=AList, effects=effects, tag=tag)
       
       return(invisible(self))
     },
     
     getSPDEResult = function() {
-      if (is.null(private$result) || is.null(private$spde))
+      if (is.null(self$result) || is.null(self$spde))
         stop("The model has not been estimated.")
-      return(inla.spde2.result(private$result, "spatial", private$spde))
+      return(inla.spde2.result(self$result, "spatial", self$spde))
     },
     
     summarySpatialParameters = function() {
@@ -97,27 +96,27 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     },
     
     summary = function() {
-      if (is.null(private$result))
+      if (is.null(self$result))
         stop("The model has not been estimated.")
-      print(summary(private$result))
+      print(summary(self$result))
       return(invisible(self))
     },
     
     #getFitted = function() {
-    #  indexObserved <- inla.stack.index(private$fullStack, "obs")$data
-    #  fitted <- private$result$summary.fitted.values$mean[indexObserved] * private$offsetScale
+    #  indexObserved <- inla.stack.index(self$fullStack, "obs")$data
+    #  fitted <- self$result$summary.fitted.values$mean[indexObserved] * self$offsetScale
     #  return(fitted)      
     #},
     
     getFittedResponse = function(tag="obs") {
       index <- self$getIndex(tag)
       offset <- self$getOffset(tag)
-      nodes <- self$getMesh()$getNumNodes()
+      nodes <- self$getSpatialMesh()$getNumNodes()
       data <- list()
-      data$responseMean <- inla.vector2matrix(self$getResult()$summary.fitted.values$mean[index] * offset, nrow = nodes, ncol = private$nTime)
-      colnames(data$responseMean) <- unique(private$time)
-      data$responseSd <- inla.vector2matrix(self$getResult()$summary.fitted.values$sd[index] * offset, nrow = nodes, ncol = private$nTime)
-      colnames(data$responseMean) <- unique(private$time)
+      data$responseMean <- inla.vector2matrix(self$getResult()$summary.fitted.values$mean[index] * offset, nrow = nodes, ncol = self$nTime)
+      colnames(data$responseMean) <- unique(self$time)
+      data$responseSd <- inla.vector2matrix(self$getResult()$summary.fitted.values$sd[index] * offset, nrow = nodes, ncol = self$nTime)
+      colnames(data$responseMean) <- unique(self$time)
       return(data)
     },
     
@@ -130,7 +129,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     summaryTemporalVariation = function() {
       observed <- self$getObserved()
       fitted <- self$getFittedResponse()$responseMean
-      x <- data.frame(time=private$time, observed=observed, fitted=fitted)
+      x <- data.frame(time=self$time, observed=observed, fitted=fitted)
       x <- ddply(x, .(time), function(x) data.frame(observed=sum(x$observed), fitted=sum(x$fitted)))
       print(x)
       return(invisible(self))
@@ -139,7 +138,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     plotTemporalVariation = function() {
       observed <- self$getObserved()
       fitted <- self$getFittedResponse()$responseMean
-      x <- data.frame(time=private$time, observed=observed, fitted=fitted)
+      x <- data.frame(time=self$time, observed=observed, fitted=fitted)
       x <- ddply(x, .(time), function(x) data.frame(observed=sum(x$observed), fitted=sum(x$fitted)))
       x <- melt(x, id.vars="time", measure.vars=c("observed", "fitted"))
       p <- ggplot(x, aes(time, value, colour=variable)) + geom_line()

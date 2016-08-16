@@ -6,7 +6,7 @@
 SpaceModel <- R6::R6Class(
   "SpaceModel",
   lock_objects = FALSE,
-  private = list(
+  public = list(
     offsetScale = 1,
     covariatesModel = NULL,
     linearModel = NULL,
@@ -15,18 +15,17 @@ SpaceModel <- R6::R6Class(
     
     getRandomEffectTerm = function() {
       stop("Unimplemented abstract method 'getRandomEffect'.")
-    }
-  ),
-  public = list(
+    },
+    
     initialize = function(offsetScale=1, ...) {
-      private$offsetScale <- offsetScale
+      self$offsetScale <- offsetScale
     },
     
     getDistanceUnit = function() return(distanceUnit),
-    getOffsetScale = function() return(private$offsetScale),
-    getLikelihood = function() return(private$likelihood),
-    getLinearModel = function() return(private$linearModel),
-    getResult = function() return(private$result),
+    getOffsetScale = function() return(self$offsetScale),
+    getLikelihood = function() return(self$likelihood),
+    getLinearModel = function() return(self$linearModel),
+    getResult = function() return(self$result),
             
     setCovariatesModel = function(covariatesModel, covariates) {
       stop("Unimplemented abstract method 'setCovariatesModel'.")
@@ -39,7 +38,7 @@ SpaceModel <- R6::R6Class(
     setLikelihood = function(likelihood) {
       if (missing(likelihood))
         stop("Required argument 'likelihood' missing.")
-      private$likelihood <- likelihood
+      self$likelihood <- likelihood
       return(invisible(self))
     },
 

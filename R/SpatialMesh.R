@@ -11,7 +11,7 @@ SpatialMesh <- R6::R6Class(
   "SpatialMesh",
   lock_objects = FALSE,
   inherit = SpaceTimeModels::Mesh,
-  private = list(
+  public = list(
     construct = function(cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, locDomain=NULL) {
       if (missing(cutoff))
         stop("Required argument 'cutoff' missing.")
@@ -20,20 +20,19 @@ SpatialMesh <- R6::R6Class(
       if (!is.null(locDomain) && !inherits(locDomain, "SpatialPoints"))
         stop("Argument 'locDomain' must be of class SpatialPoints.")
       
-      meshCoordinates <- private$getMeshKnots()
+      meshCoordinates <- self$getMeshKnots()
       locDomain <- SpaceTimeModels::nullScale(sp::coordinates(locDomain), self$getScale())
-      private$mesh <- inla.mesh.2d(loc=meshCoordinates,
+      self$mesh <- inla.mesh.2d(loc=meshCoordinates,
                                    loc.domain=locDomain,
                                    cutoff=SpaceTimeModels::nullScale(cutoff, self$getScale()),
                                    max.edge=SpaceTimeModels::nullScale(maxEdge, self$getScale()),
                                    offset=SpaceTimeModels::nullScale(offset, self$getScale()),
                                    min.angle=minAngle)
-    }
-  ),
-  public = list(
+    },
+
     initialize = function(..., cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, locDomain=NULL) {
       super$initialize(...)
-      private$construct(cutoff=cutoff, maxEdge=maxEdge, offset=offset, minAngle=minAngle, locDomain=locDomain)
+      self$construct(cutoff=cutoff, maxEdge=maxEdge, offset=offset, minAngle=minAngle, locDomain=locDomain)
     }
   )
 )
