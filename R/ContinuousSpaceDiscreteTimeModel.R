@@ -101,49 +101,35 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       print(summary(self$result))
       return(invisible(self))
     },
-    
-    #getFitted = function() {
-    #  indexObserved <- inla.stack.index(self$fullStack, "obs")$data
-    #  fitted <- self$result$summary.fitted.values$mean[indexObserved] * self$offsetScale
-    #  return(fitted)      
+
+    #getFittedResponse = function(tag="obs") {
+    #  data <- super$getFittedResponse(tag=tag)
+    #  #data$time <- self$time
+    #  return(data)
     #},
     
-    getFittedResponse = function(tag="obs") {
-      index <- self$getIndex(tag)
-      offset <- self$getOffset(tag)
-      nodes <- self$getSpatialMesh()$getNumNodes()
-      data <- list()
-      data$responseMean <- inla.vector2matrix(self$getResult()$summary.fitted.values$mean[index] * offset, nrow = nodes, ncol = self$nTime)
-      colnames(data$responseMean) <- unique(self$time)
-      data$responseSd <- inla.vector2matrix(self$getResult()$summary.fitted.values$sd[index] * offset, nrow = nodes, ncol = self$nTime)
-      colnames(data$responseMean) <- unique(self$time)
-      return(data)
-    },
+    #getFittedLinearPredictor = function(tag="obs") {
+    #  data <- super$getFittedLinearPredictor(tag=tag)
+    #  #data$time <- self$time
+    #  return(data)
+    #},
     
-    getFittedLinearPredictor = function(tag="obs") {
-      index <- self$getIndex(tag)
-      data <- list()
-      return(data) 
-    },
+    #getFittedSpatialEffect = function() {
+    #  data <- super$getFittedSpatialEffect()
+    #  return(data)
+    #}
     
     summaryTemporalVariation = function() {
       observed <- self$getObserved()
       fitted <- self$getFittedResponse()$responseMean
       x <- data.frame(time=self$time, observed=observed, fitted=fitted)
-      x <- ddply(x, .(time), function(x) data.frame(observed=sum(x$observed), fitted=sum(x$fitted)))
-      print(x)
-      return(invisible(self))
+      x %>% group_by(time) %>% summarise(observed=sum(observed), fitted=sum(fitted))
     },
     
     plotTemporalVariation = function() {
-      observed <- self$getObserved()
-      fitted <- self$getFittedResponse()$responseMean
-      x <- data.frame(time=self$time, observed=observed, fitted=fitted)
-      x <- ddply(x, .(time), function(x) data.frame(observed=sum(x$observed), fitted=sum(x$fitted)))
-      x <- melt(x, id.vars="time", measure.vars=c("observed", "fitted"))
-      p <- ggplot(x, aes(time, value, colour=variable)) + geom_line()
-      print(p)
-      return(invisible(self))
+      x <- self$summaryTemporalVariation()
+      x %>% gather(observed, fitted, value="value", key="variable") %>% 
+        ggplot(aes(time, value, colour=variable)) + geom_line()
     },
     
     plotSpatialVariation = function(timeIndex) {

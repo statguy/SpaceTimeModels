@@ -168,7 +168,7 @@ ContinuousSpaceModel <- R6::R6Class(
         
     estimate = function(verbose=F) {
       if (is.null(self$getFullStack()))
-        stop("Data stack must be defined first.")
+        stop("Data stack must be specified first.")
       
       dataStack <- inla.stack.data(self$getFullStack(), spde=self$getSPDEObject())
       self$result <- try(inla(self$getLinearModel(), family=self$getLikelihood(), data=dataStack, E=dataStack$E,
@@ -183,6 +183,9 @@ ContinuousSpaceModel <- R6::R6Class(
     },
 
     getIndex = function(tag="obs") {
+      if (is.null(self$getFullStack()))
+        stop("No index has been specified.")
+      
       inla.stack.index(self$getFullStack(), tag)$data
     },
     
