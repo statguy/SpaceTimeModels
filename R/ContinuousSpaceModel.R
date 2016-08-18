@@ -105,7 +105,7 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))        
     },
     
-    addObservationStack = function(sp, response=NA, covariates, offset, tag="obs") {
+    addObservationStack = function(sp, response, covariates, offset, tag="obs") {
       # TODO: allow defining link function
       
       if (is.null(self$getSpatialMesh()))
@@ -119,7 +119,9 @@ ContinuousSpaceModel <- R6::R6Class(
         stop("Required argument 'sp' must be given.")
       if (!inherits(sp, "SpatialPoints"))
         stop("Argument 'sp' must be of class 'SpatialPoints'.")
-        
+      if (missing(response))
+        stop("Required argument 'response' must be given.")
+      
       dataList <- list(response=response)
       if (!missing(offset)) dataList$E <- offset / self$getOffsetScale()
 
@@ -141,25 +143,21 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))
     },
     
-    addValidationStack = function(sp, response=NA, covariates, offset, tag="val") {
-      self$addObservationStack(sp=sp, response=response, covariates=covariates, offset=offset, tag=tag)
+    addValidationStack = function(sp, covariates, offset, tag="val") {
+      self$addObservationStack(sp=sp, response=NA, covariates=covariates, offset=offset, tag=tag)
     },
     
-    addPredictionStack = function(sp, response=NA, covariates, tag="pred") {
-      # TODO: finish this function
-      
+    addPredictionStack = function(sp, tag="pred") {
       if (missing(sp))
         stop("Required argument 'sp' must be given.")
       if (!inherits(sp, "SpatialPoints"))
         stop("Argument 'sp' must be of class 'SpatialPoints'.")
-      coordinates <- self$scaleCoordinates(sp::coordinates(sp))
       
-      effects <- if (self$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(index, coordinates))
-      AList <- if (!is.null(modelMatrix)) {
-        effects[[2]] <- modelMatrix
-        list(A, 1)
-      }
-      else list(A)
+      dataList <- list(response=NA)
+      coordinates <- self$scaleCoordinates(sp::coordinates(sp))
+      fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde)
+      effects <- if (self$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(fieldIndex, coordinates))
+      AList <- list(1)
       
       self$addStack(data=dataList, A=AList, effects=effects, tag=tag)
       

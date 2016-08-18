@@ -27,6 +27,12 @@ Piemonte_data_validation[,3:10] <- scale(Piemonte_data_validation[,3:10], mean_c
 obs <- spacetime::STIDF(sp::SpatialPoints(coordinates[Piemonte_data$Station.ID, c("UTMX","UTMY")]), as.Date(Piemonte_data$Date, "%d/%m/%y"), Piemonte_data[,"logPM10",drop=F])
 val <- spacetime::STI(sp::SpatialPoints(coordinates_validation[Piemonte_data_validation$Station.ID, c("UTMX","UTMY")]), as.Date(Piemonte_data_validation$Date, "%d/%m/%y"))
 
+# Take a subset of the data for testing
+obs <- obs[,obs@time["/2005-10-15"]]
+nrow(obs)
+val <- val[,val@time["/2005-10-15"]]
+nrow(val)
+
 mesh <- SpaceTimeModels::SpatialMesh$new(knots=obs, locDomain=sp::SpatialPoints(borders), offset=c(10, 140), maxEdge=c(50, 1000), minAngle=c(26, 21), cutoff=0)
 mesh$plot()
 
@@ -36,9 +42,11 @@ model$setSpatialPrior()
 model$setSmoothingModel()
 model$getLinearModel()
 model$addObservationStack(sp=obs, response=obs@data$logPM10, tag="obs")
-model$addObservationStack(sp=val, tag="val")
-#model$addObservationStack(coordinates=coordinates[Piemonte_data$Station.ID, c("UTMX","UTMY")], time=Piemonte_data$time, response=Piemonte_data$logPM10, tag="obs")
-#model$addObservationStack(coordinates=coordinates_validation[Piemonte_data_validation$Station.ID, c("UTMX","UTMY")], time=Piemonte_data_validation$time, tag="val")
+#model$addValidationStack(sp=val)
+model$addPredictionStack(sp=obs)
 model$estimate(verbose=T)
 model$summary()
-model$summarySpatial()
+model$summarySpatialParameters()
+model$summaryTemporalVariation(timeIndex=time(obs))
+model$plotTemporalVariation(timeIndex=time(obs))
+model$plotSpatialVariation(timeIndex=1, tag="pred")
