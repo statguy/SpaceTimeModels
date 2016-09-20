@@ -162,20 +162,22 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
         ggplot(aes(time, value, colour=variable)) + geom_line()
     },
     
-    plotSpatialVariation = function(variable="mean", timeIndex, xlim, ylim, dims, tag="obs") {
-      #if (missing(timeIndex))
-      #timeIndex <- unique(inla.stack.data(self$getFullStack())$spatial.group)
-      #if (!timeIndex %in% timeIndex)
-      
+    plotSpatialVariation = function(variable="mean", timeIndex, xlim, ylim, dims, tag="pred") {
+      str <- self$getSpatialVariationRaster(variable, tag=tag)
+      gplot(str$getLayers()[[timeIndex]]) + geom_raster(aes(fill=value))
+    },
+    
+    getSpatialVariationRaster = function(variable="mean", timeLabels, height=100, width=200, tag="pred") {
       index <- self$getIndex(tag)
       predictedValues <- self$getResult()$summary.fitted.values[index, variable] # TODO: offset
       meshNodes <- self$getSpatialMesh()$getINLAMesh()$n
-      maxTimeIndex <- max(inla.stack.data(self$getFullStack())$spatial.group)
-      m <- inla.vector2matrix(predictedValues, nrow=meshNodes, ncol=maxTimeIndex)
-      projector <- inla.mesh.projector(self$getSpatialMesh()$getINLAMesh()) # TODO: xlim=xlim, ylim=ylim, dims=dims)
-      projection <- inla.mesh.project(projector, m[,timeIndex])
-      plotData <- cbind(expand.grid(x=projector$x, y=projector$y), z=as.vector(projection))
-      plotData %>% ggplot(aes(x, y)) + geom_raster(aes(fill=z))
+      maxTimeIndex <- length(unique(INLA::inla.stack.data(self$getFullStack())$spatial.group))
+      predictions <- INLA::inla.vector2matrix(predictedValues, nrow=meshNodes, ncol=maxTimeIndex)
+      
+      str <- SpaceTimeRaster$new(sp=self$getSpatialMesh()$getKnots(), height=height, width=width)
+      str$project(self$getSpatialMesh(), predictions, timeLabels=timeLabels)
+      
+      invisible(str)
     }
   )
 )
