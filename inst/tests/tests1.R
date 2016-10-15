@@ -58,19 +58,19 @@ model$plotSpatialVariation(timeIndex=1, tag="pred") # FIXME
 
 validation0 <- list(p=rep(NA, length(obs$logPM10)))
 lp <- model$getFittedLinearPredictor()
-validation0$res = obs$logPM10 - lp$etaMean
-validation0$res.std = validation0$res / sqrt(lp$etaSd^2 + 1/model$getFittedHyperparameters()[1,"mean"])
-validation0$p = pnorm(validation0$res.std)
+validation0$res <- obs$logPM10 - lp$etaMean
+validation0$res.std <- validation0$res / sqrt(lp$etaSd^2 + 1/model$getFittedHyperparameters()[1,"mean"])
+validation0$p <- pnorm(validation0$res.std)
 
-validation = list()
+validation <- list()
 lp <- model$getFittedLinearPredictor(tag="val")
-validation$res = val$logPM10 - lp$etaMean
-validation$res.std = validation$res / sqrt(lp$etaSd^2 + 1/model$getFittedHyperparameters()[1,"mean"])
-validation$p = pnorm(validation$res.std)
+validation$res <- val$logPM10 - lp$etaMean
+validation$res.std <- validation$res / sqrt(lp$etaSd^2 + 1/model$getFittedHyperparameters()[1,"mean"])
+validation$p <- pnorm(validation$res.std)
 
-validation$rmse = sqrt(mean(validation$res^2, na.rm=TRUE))
-validation$cor = cor(val$logPM10, lp$etaMean, use="pairwise.complete.obs", method="pearson")
-validation$cover = mean((validation$p>0.025)&(validation$p<0.975), na.rm=TRUE)
+validation$rmse <- sqrt(mean(validation$res^2, na.rm=TRUE))
+validation$cor <- cor(val$logPM10, lp$etaMean, use="pairwise.complete.obs", method="pearson")
+validation$cover <- mean((validation$p>0.025)&(validation$p<0.975), na.rm=TRUE)
 
 validation0
 validation

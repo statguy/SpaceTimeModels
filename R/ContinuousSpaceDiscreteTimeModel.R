@@ -173,7 +173,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       index <- self$getIndex(tag)
       predictedValues <- self$getResult()$summary.fitted.values[index, variable] # TODO: offset
       meshNodes <- self$getSpatialMesh()$getINLAMesh()$n
-      maxTimeIndex <- length(unique(INLA::inla.stack.data(self$getFullStack())$spatial.group))
+      maxTimeIndex <- length(na.omit(unique(INLA::inla.stack.data(self$getFullStack())$spatial.group)))
       predictions <- INLA::inla.vector2matrix(predictedValues, nrow=meshNodes, ncol=maxTimeIndex)
       
       str <- SpaceTimeRaster$new(sp=self$getSpatialMesh()$getKnots(), height=height, width=width)
