@@ -4,7 +4,7 @@
 #' @export ContinuousSpaceTimeModel
 #' @keywords internal
 ContinuousSpaceTimeModel <- R6::R6Class(
-  "SpaceTimeModel",
+  "ContinuousSpaceTimeModel",
   lock_objects = FALSE,
   inherit = SpaceTimeModels::ContinuousSpaceModel,
   public = list(

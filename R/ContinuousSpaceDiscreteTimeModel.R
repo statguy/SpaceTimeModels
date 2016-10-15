@@ -36,7 +36,9 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       if (!missing(offset)) dataList$E <- offset / self$getOffsetScale()
 
       coordinates <- self$scaleCoordinates(sp::coordinates(sp))
-      SpaceTimeModels::assertCompleteCovariates(self$covariatesModel, covariates)
+      if (!missing(covariates)) SpaceTimeModels::assertCompleteCovariates(self$covariatesModel, covariates)
+      if (length(SpaceTimeModels::getCovariateNames(self$covariatesModel)) > 0 && missing(covariates))
+        stop("Covariates specified in the model but argument 'covariates' missing.")
       modelMatrix <- SpaceTimeModels::getINLAModelMatrix(self$covariatesModel, covariates)
       
       time <- time(sp)
