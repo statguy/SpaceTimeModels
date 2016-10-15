@@ -36,7 +36,9 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       if (!missing(offset)) dataList$E <- offset / self$getOffsetScale()
 
       coordinates <- self$scaleCoordinates(sp::coordinates(sp))
-      SpaceTimeModels::assertCompleteCovariates(self$covariatesModel, covariates)
+      if (!missing(covariates)) SpaceTimeModels::assertCompleteCovariates(self$covariatesModel, covariates)
+      if (length(SpaceTimeModels::getCovariateNames(self$covariatesModel)) > 0 && missing(covariates))
+        stop("Covariates specified in the model but argument 'covariates' missing.")
       modelMatrix <- SpaceTimeModels::getINLAModelMatrix(self$covariatesModel, covariates)
       
       time <- time(sp)
@@ -167,7 +169,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       gplot(str$getLayers()[[timeIndex]]) + geom_raster(aes(fill=value))
     },
     
-    getSpatialVariationRaster = function(variable="mean", timeLabels, height=100, width=200, tag="pred") {
+    getSpatialVariationRaster = function(variable="mean", timeLabels, height=100, width=100, tag="pred") {
       index <- self$getIndex(tag)
       predictedValues <- self$getResult()$summary.fitted.values[index, variable] # TODO: offset
       meshNodes <- self$getSpatialMesh()$getINLAMesh()$n

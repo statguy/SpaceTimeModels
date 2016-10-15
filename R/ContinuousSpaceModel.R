@@ -35,7 +35,7 @@ ContinuousSpaceModel <- R6::R6Class(
       obsStack <- inla.stack(data=data, A=A, effects=effects, tag=tag)
       self$fullStack <- if (is.null(self$fullStack)) inla.stack(obsStack)
       else {
-        if (names(self$fullStack$data$index) == tag)
+        if (tag %in% names(self$fullStack$data$index))
           stop("Stack with tag '", tag, "' already exists.")
         inla.stack(self$fullStack, obsStack)
       }
@@ -76,6 +76,8 @@ ContinuousSpaceModel <- R6::R6Class(
       }
       
       self$covariatesModel <- covariatesModel
+      if (length(SpaceTimeModels::getCovariateNames(self$covariatesModel)) > 0 && missing(covariates))
+        stop("Covariates specified in the model but argument 'covariates' missing.")
       covariates <- colnames(getINLAModelMatrix(covariatesModel, covariates))
       intercept <- if (attr(x, "intercept")[1] == 0) NULL else "intercept"
       randomEffect <- self$getRandomEffectTerm()
@@ -184,7 +186,10 @@ ContinuousSpaceModel <- R6::R6Class(
       if (is.null(self$getFullStack()))
         stop("No index has been specified.")
       
-      inla.stack.index(self$getFullStack(), tag)$data
+      index <- inla.stack.index(self$getFullStack(), tag)$data
+      if (is.null(index))
+        stop(paste("No index found with tag", obs))
+      return(index)
     },
     
     getOffset = function(tag="obs") {
@@ -222,6 +227,18 @@ ContinuousSpaceModel <- R6::R6Class(
       data$spatialSd <- self$getResult()$summary.random$spatial$sd
       # location, year
       return(as.data.frame(data))
+    },
+    
+    getFittedFixedEffects = function() {
+      return(self$getResult()$summary.fixed)
+    },
+    
+    getFittedHyperparameters = function() {
+      return(self$getResult()$summary.hyperpar)
+    },
+    
+    getWAIC = function() {
+      return(self$getResult()$waic)
     }
   )
 )

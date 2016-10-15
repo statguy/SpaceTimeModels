@@ -24,29 +24,53 @@ sd_covariates <- apply(Piemonte_data[,3:10], 2, sd)
 Piemonte_data[,3:10] <- scale(Piemonte_data[,3:10], mean_covariates, sd_covariates)
 Piemonte_data_validation[,3:10] <- scale(Piemonte_data_validation[,3:10], mean_covariates, sd_covariates)
 
-obs <- spacetime::STIDF(sp::SpatialPoints(coordinates[Piemonte_data$Station.ID, c("UTMX","UTMY")]), as.Date(Piemonte_data$Date, "%d/%m/%y"), Piemonte_data[,"logPM10",drop=F])
-val <- spacetime::STI(sp::SpatialPoints(coordinates_validation[Piemonte_data_validation$Station.ID, c("UTMX","UTMY")]), as.Date(Piemonte_data_validation$Date, "%d/%m/%y"))
+#obs <- spacetime::STIDF(sp::SpatialPoints(coordinates[Piemonte_data$Station.ID, c("UTMX","UTMY")]), as.Date(Piemonte_data$Date, "%d/%m/%y"), Piemonte_data[,"logPM10",drop=F])
+#val <- spacetime::STIDF(sp::SpatialPoints(coordinates_validation[Piemonte_data_validation$Station.ID, c("UTMX","UTMY")]), as.Date(Piemonte_data_validation$Date, "%d/%m/%y"), Piemonte_data_validation[,"logPM10",drop=F])
+obs <- spacetime::STIDF(sp::SpatialPoints(coordinates[Piemonte_data$Station.ID, c("UTMX","UTMY")]), as.Date(Piemonte_data$Date, "%d/%m/%y"), Piemonte_data)
+val <- spacetime::STIDF(sp::SpatialPoints(coordinates_validation[Piemonte_data_validation$Station.ID, c("UTMX","UTMY")]), as.Date(Piemonte_data_validation$Date, "%d/%m/%y"), Piemonte_data_validation)
 
 # Take a subset of the data for testing
-obs <- obs[,obs@time["/2005-10-15"]]
+obs <- obs[,obs@time["/2005-10-05"]]
+val <- val[,val@time["/2005-10-05"]]
 nrow(obs)
-val <- val[,val@time["/2005-10-15"]]
 nrow(val)
 
 mesh <- SpaceTimeModels::SpatialMesh$new(knots=obs, locDomain=sp::SpatialPoints(borders), offset=c(10, 140), maxEdge=c(50, 1000), minAngle=c(26, 21), cutoff=0)
 mesh$plot()
 
+formula <- ~ A + UTMX + UTMY + WS + TEMP + HMIX + PREC + EMI
+
 model <- SpaceTimeModels::ContinuousSpaceDiscreteTimeModel$new()
 model$setSpatialMesh(mesh)
 model$setSpatialPrior()
-model$setSmoothingModel()
+#model$setSmoothingModel()
+model$setCovariatesModel(formula, obs@data)
 model$getLinearModel()
-model$addObservationStack(sp=obs, response=obs@data$logPM10, tag="obs")
-#model$addValidationStack(sp=val)
+model$addObservationStack(sp=obs, response=obs@data$logPM10, covariates=obs@data, tag="obs")
+model$addValidationStack(sp=val, covariates=val@data)
 model$addPredictionStack(sp=obs)
 model$estimate(verbose=T)
 model$summary()
 model$summarySpatialParameters()
 model$summaryTemporalVariation(timeIndex=time(obs))
 model$plotTemporalVariation(timeIndex=time(obs))
-model$plotSpatialVariation(timeIndex=1, tag="pred")
+model$plotSpatialVariation(timeIndex=1, tag="pred") # FIXME
+
+validation0 <- list(p=rep(NA, length(obs$logPM10)))
+lp <- model$getFittedLinearPredictor()
+validation0$res = obs$logPM10 - lp$etaMean
+validation0$res.std = validation0$res / sqrt(lp$etaSd^2 + 1/model$getFittedHyperparameters()[1,"mean"])
+validation0$p = pnorm(validation0$res.std)
+
+validation = list()
+lp <- model$getFittedLinearPredictor(tag="val")
+validation$res = val$logPM10 - lp$etaMean
+validation$res.std = validation$res / sqrt(lp$etaSd^2 + 1/model$getFittedHyperparameters()[1,"mean"])
+validation$p = pnorm(validation$res.std)
+
+validation$rmse = sqrt(mean(validation$res^2, na.rm=TRUE))
+validation$cor = cor(val$logPM10, lp$etaMean, use="pairwise.complete.obs", method="pearson")
+validation$cover = mean((validation$p>0.025)&(validation$p<0.975), na.rm=TRUE)
+
+validation0
+validation

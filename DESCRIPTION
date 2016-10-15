@@ -1,35 +1,37 @@
 Package: SpaceTimeModels
 Type: Package
-Title: An interface for fitting parametric spatial and spatio-temporal models with INLA
-Version: 0.1.3
-Date: 2016-03-29
+Title: An interface for fitting parametric spatial and spatio-temporal models
+    with INLA
+Version: 0.1.4
+Date: 2016-10-15
 Author: Jussi Jousimo
 Maintainer: Jussi Jousimo <jvj@iki.fi>
-Description: An interface for fitting parametric spatial and spatio-temporal models with INLA
+Description: An interface for fitting parametric spatial and spatio-temporal
+    models with INLA
 License: BSD_2_clause + file LICENSE
 Depends:
-  R (>= 3.0.0),
-  INLA (>= 0.0-1428997066),
-  R6 (>= 2.1.0),
-  sp,
-  spacetime,
-  raster,
-  tidyr,
-  plyr,
-  dplyr,
-  reshape2,
-  ggplot2,
-  rasterVis
-Suggests:
+    R (>= 3.0.0),
+    INLA (>= 0.0-1428997066),
+    R6 (>= 2.1.0),
+    sp,
+    spacetime,
+    raster,
+    tidyr,
+    plyr,
+    dplyr,
+    reshape2,
+    ggplot2,
+    rasterVis
 URL: https://github.com/statguy/SpaceTimeModels
 LazyLoad: yes
 Collate:
-  'utilities.R'
-  'Mesh.R'
-  'SpatialMesh.R'
-  'NonConvexHullMesh.R'
-  'SpaceModel.R'
-  'ContinuousSpaceModel.R'
-  'ContinuousSpaceTimeModel.R'
-  'ContinuousSpaceDiscreteTimeModel.R'
-  'SpaceTimeRaster.R'
+    'utilities.R'
+    'Mesh.R'
+    'SpatialMesh.R'
+    'NonConvexHullMesh.R'
+    'SpaceModel.R'
+    'ContinuousSpaceModel.R'
+    'ContinuousSpaceTimeModel.R'
+    'ContinuousSpaceDiscreteTimeModel.R'
+    'SpaceTimeRaster.R'
+RoxygenNote: 5.0.1
