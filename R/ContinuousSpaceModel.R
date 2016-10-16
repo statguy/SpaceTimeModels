@@ -126,7 +126,8 @@ ContinuousSpaceModel <- R6::R6Class(
       
       dataList <- list(response=response)
       if (!missing(offset)) dataList$E <- offset / self$getOffsetScale()
-
+      if (!is.null(self$getLinkFunction())) dataList$link <- self$getLinkFunction()
+      
       coordinates <- self$scaleCoordinates(sp::coordinates(sp))
       SpaceTimeModels::assertCompleteCovariates(self$covariatesModel, covariates)
       modelMatrix <- SpaceTimeModels::getINLAModelMatrix(self$covariatesModel, covariates)
@@ -156,6 +157,8 @@ ContinuousSpaceModel <- R6::R6Class(
         stop("Argument 'sp' must be of class 'SpatialPoints'.")
       
       dataList <- list(response=NA)
+      if (!is.null(self$getLinkFunction())) dataList$link <- self$getLinkFunction()
+      
       coordinates <- self$scaleCoordinates(sp::coordinates(sp))
       fieldIndex <- inla.spde.make.index("spatial", n.spde=self$getSPDEObject()$n.spde)
       effects <- if (self$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(fieldIndex, coordinates))
@@ -172,7 +175,7 @@ ContinuousSpaceModel <- R6::R6Class(
       
       dataStack <- inla.stack.data(self$getFullStack(), spde=self$getSPDEObject())
       self$result <- try(inla(self$getLinearModel(), family=self$getLikelihood(), data=dataStack, E=dataStack$E,
-                                 control.predictor=list(A=inla.stack.A(self$getFullStack()), compute=TRUE), # link=dataStack$link
+                                 control.predictor=list(A=inla.stack.A(self$getFullStack()), link=1, compute=TRUE),
                                  control.compute=list(waic=TRUE, config=TRUE),
                                  control.inla=list(reordering="metis"),
                                  verbose=verbose))

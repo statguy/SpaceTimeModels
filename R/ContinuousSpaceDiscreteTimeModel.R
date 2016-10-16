@@ -34,6 +34,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       
       dataList <- list(response=response)
       if (!missing(offset)) dataList$E <- offset / self$getOffsetScale()
+      if (!is.null(self$getLinkFunction())) dataList$link <- self$getLinkFunction()
 
       coordinates <- self$scaleCoordinates(sp::coordinates(sp))
       if (!missing(covariates)) SpaceTimeModels::assertCompleteCovariates(self$covariatesModel, covariates)
@@ -67,6 +68,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
         stop("Argument 'sp' must be of class 'STI'.")
       
       dataList <- list(response=NA)
+      if (!is.null(self$getLinkFunction())) dataList$link <- self$getLinkFunction()
       
       coordinates <- self$scaleCoordinates(sp::coordinates(sp)) # TODO: sp not required parameter
       time <- time(sp)
