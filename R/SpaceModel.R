@@ -11,6 +11,7 @@ SpaceModel <- R6::R6Class(
     covariatesModel = NULL,
     linearModel = NULL,
     likelihood = "gaussian",
+    link = NULL,
     result = NULL,
     
     getRandomEffectTerm = function() {
@@ -24,6 +25,7 @@ SpaceModel <- R6::R6Class(
     getDistanceUnit = function() return(distanceUnit),
     getOffsetScale = function() return(self$offsetScale),
     getLikelihood = function() return(self$likelihood),
+    getLinkFunction = function() return(self$link),
     getLinearModel = function() return(self$linearModel),
     getResult = function() return(self$result),
             
@@ -42,6 +44,13 @@ SpaceModel <- R6::R6Class(
       return(invisible(self))
     },
 
+    setLinkFunction = function(link) {
+      if (missing(link))
+        stop("Required argument 'link' missing.")
+      self$link <- link
+      return(invisible(self))
+    },
+    
     estimate = function(verbose=T) {
       stop("Unimplemented abstract method 'estimate'.")
     },

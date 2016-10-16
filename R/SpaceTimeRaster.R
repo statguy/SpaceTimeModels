@@ -28,6 +28,16 @@ SpaceTimeRaster <- R6::R6Class(
       invisible(self)
     },
     
+    getLayer = function(index) {
+      if (index < 1 || nlayers(self$layers) > index)
+        stop("Parameter 'index' out of range.")
+      return(self$layers[[index]])
+    },
+    
+    getLayers = function() {
+      return(self$layers)
+    },
+    
     project = function(mesh, predictions, timeLabels) {
       if (missing(mesh)) stop("Required parameter 'mesh' missing.")
       if (missing(predictions)) stop("Required parameter 'predictions' missing.")
