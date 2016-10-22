@@ -16,7 +16,7 @@ SpaceTimeRaster <- R6::R6Class(
     initialize = function(sp, height = 180, width = 360) {
       if (!missing(sp)) {
         if (!inherits(sp, "Spatial"))
-          stop("Parameter 'sp' must be of class 'Spatial' or descedant.")
+          stop("Parameter 'sp' must be of class 'sp::Spatial' or descedant.")
         self$template <- raster(raster::extent(sp), nrows = height, ncols = width, crs = sp@proj4string)
       }
     },
@@ -47,13 +47,13 @@ SpaceTimeRaster <- R6::R6Class(
       
       inlaMesh <- if (inherits(mesh, "Mesh")) mesh$getINLAMesh()
       else if (inherits(mesh, "inla.mesh")) mesh
-      else stop("Parameter 'mesh' has invalid type.")
+      else stop("Parameter 'mesh' must be of type 'SpaceTimeModels::Mesh' or 'INLA::inla.mesh'.")
       projector <- INLA::inla.mesh.projector(inlaMesh,
                                              dims = c(ncol(self$template), nrow(self$template)),
                                              xlim = c(xmin(self$template), xmax(self$template)),
                                              ylim = c(ymin(self$template), ymax(self$template)))
       
-      if (!inherits(predictions, "matrix")) stop("Parameter 'predictions' has invalid type.")
+      if (!inherits(predictions, "matrix")) stop("Parameter 'predictions' must be of type 'matrix'.")
       
       timeLabels <- if (missing(timeLabels)) paste0("t", 1:ncol(predictions)) else timeLabels
       
