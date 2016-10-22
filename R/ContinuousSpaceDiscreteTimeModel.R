@@ -182,7 +182,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       if (!missing(timeIndex)) predictions <- predictions[,timeIndex, drop=F]
       
       str <- SpaceTimeRaster$new(sp = self$getSpatialMesh()$getKnots(), height = height, width = width)
-      str$project(self$getSpatialMesh(), predictions, timeLabels=timeLabels)
+      str$project(self$getSpatialMesh(), predictions, timeLabels = timeLabels)
       return(str)
     }
   )
