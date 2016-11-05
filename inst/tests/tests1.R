@@ -40,24 +40,34 @@ mesh$plot()
 
 formula <- ~ A + UTMX + UTMY + WS + TEMP + HMIX + PREC + EMI
 
-model <- SpaceTimeModels::ContinuousSpaceDiscreteTimeModel$new()
-model$setSpatialMesh(mesh)
-model$setSpatialPrior()
-#model$setSmoothingModel()
-model$setCovariatesModel(formula, obs@data)
+model <- SpaceTimeModels::ContinuousSpaceDiscreteTimeModel $ 
+  new() $
+  setSpatialMesh(mesh) $
+  setSpatialPrior() $
+#  setSmoothingModel() $
+  setCovariatesModel(formula, obs@data) $
+  setLikelihood("gaussian") $
+  setLinkFunction(gaussian()$link) $
+  addObservationStack(sp = obs, response = obs@data$logPM10, covariates=obs@data) $
+  addValidationStack(sp = val, covariates = val@data) $
+  addPredictionStack(sp = obs)
 model$getLinearModel()
-#model$setLikelihood("gaussian")
-#model$setLinkFunction(gaussian()$link)
-model$addObservationStack(sp=obs, response=obs@data$logPM10, covariates=obs@data)
-model$addValidationStack(sp=val, covariates=val@data)
-model$addPredictionStack(sp=obs)
-model$estimate(verbose=T)
+model$estimate(verbose = T)
 model$summary()
 model$summarySpatialParameters()
-model$summaryTemporalVariation(timeIndex=time(obs))
-model$plotTemporalVariation(timeIndex=time(obs))
-model$plotSpatialVariation(timeIndex=1)
-model$plotSpatialVariation(timeIndex=2)
+model$summaryTemporalVariation(timeIndex = time(obs))
+model$plotTemporalVariation(timeIndex = time(obs))
+model$plotSpatialVariation(timeIndex = 1)
+model$plotSpatialVariation(timeIndex = 2)
+
+rasters <- model$getSpatialVariationRaster(template = raster::extend(raster::extent(as.matrix(borders)), 10), width = 200, height = 200)
+rasterVis::gplot(rasters$getLayer(1)) + ggplot2::geom_raster(aes(fill = value)) +
+  ggplot2::geom_path(data = borders, aes(UTM_X, UTM_Y)) +
+  ggplot2::geom_point(data = data.frame(obs@sp), aes(UTMX, UTMY)) +
+  ggplot2::scale_fill_gradientn(colours = terrain.colors(40), guide = guide_legend(title = expression(PM[10]))) +
+  ggplot2::coord_equal() +
+  SpaceTimeModels::theme_raster() +
+  ggplot2::theme(legend.position = "right", legend.title = element_text(size = 10), legend.text = element_text(size = 10))
 
 validation0 <- list(p=rep(NA, length(obs$logPM10)))
 etaMean <- model$getFittedLinearPredictor()
