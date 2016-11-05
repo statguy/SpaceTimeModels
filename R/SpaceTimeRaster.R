@@ -1,5 +1,5 @@
 #' @title Space-time raster
-#' @description Object to hold space time rasters.
+#' @description Class to hold space time rasters.
 #' @usage NULL
 #' @format NULL
 #' @import R6
@@ -13,11 +13,12 @@ SpaceTimeRaster <- R6::R6Class(
     template = raster::raster(),
     layers = raster::stack(),
 
-    initialize = function(sp, height = 180, width = 360) {
-      if (!missing(sp)) {
-        if (!inherits(sp, "Spatial"))
-          stop("Parameter 'sp' must be of class 'sp::Spatial' or descedant.")
-        self$template <- raster(raster::extent(sp), nrows = height, ncols = width, crs = sp@proj4string)
+    initialize = function(x, height = 180, width = 360, crs) {
+      if (!missing(x)) {
+        self$template <- if (inherits(x, "Extent")) raster::raster(x, nrows = height, ncols = width, crs = crs)
+        else if (inherits(x, "Spatial")) raster::raster(raster::extent(x), nrows = height, ncols = width, crs = x@proj4string)
+        else if (inherits(x, "RasterLayer")) x
+        else stop("Parameter 'extent' must be of class 'raster::Raster', 'raster::Extent', 'sp::Spatial' or descedant.")
       }
     },
     
@@ -32,7 +33,7 @@ SpaceTimeRaster <- R6::R6Class(
     },
     
     getLayer = function(index) {
-      if (index < 1 || raster::nlayers(self$layers) > index)
+      if (index < 1 || index > raster::nlayers(self$layers))
         stop("Parameter 'index' is out of range.")
       return(self$layers[[index]])
     },
@@ -60,7 +61,7 @@ SpaceTimeRaster <- R6::R6Class(
       for (i in 1:ncol(predictions)) {
         projection <- INLA::inla.mesh.project(projector, predictions[,i])
         raster::values(self$template) <- t(projection[,ncol(projection):1])
-        raster::names(self$template) <- timeLabels[i]
+        names(self$template) <- timeLabels[i]
         self$addLayer(self$template)
       }
       

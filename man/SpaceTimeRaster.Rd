@@ -5,7 +5,7 @@
 \alias{SpaceTimeRaster}
 \title{Space-time raster}
 \description{
-Object to hold space time rasters.
+Class to hold space time rasters.
 }
 \author{
 Jussi Jousimo \email{jvj@iki.fi}

@@ -30,8 +30,8 @@ Mesh <- R6::R6Class(
     },
     
     getScale = function() return(self$knotsScale),
-    getKnots = function() return(sp::SpatialPoints(self$knots, proj4string=self$getCRS())),
-    getScaledKnots = function() return(sp::SpatialPoints(self$knots / self$getScale(), proj4string=self$getCRS())),
+    getKnots = function() return(sp::SpatialPoints(self$knots, proj4string = self$getCRS())),
+    getScaledKnots = function() return(sp::SpatialPoints(self$knots / self$getScale(), proj4string = self$getCRS())),
     getINLAMesh = function() return(self$mesh),
     getCRS = function() return(self$crs),
     getNumNodes = function() return(self$getINLAMesh()$n),
@@ -40,7 +40,7 @@ Mesh <- R6::R6Class(
       if (is.null(self$mesh))
         stop("Mesh must be constructed first.")
       plot(self$getINLAMesh())
-      points(self$getMeshKnots(), pch='*', col='red')
+      points(self$getMeshKnots(), pch = '*', col = 'red')
       return(invisible(self))
     }
   )

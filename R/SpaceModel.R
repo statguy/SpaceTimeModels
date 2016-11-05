@@ -18,7 +18,7 @@ SpaceModel <- R6::R6Class(
       stop("Unimplemented abstract method 'getRandomEffect'.")
     },
     
-    initialize = function(offsetScale=1, ...) {
+    initialize = function(offsetScale = 1, ...) {
       self$offsetScale <- offsetScale
     },
     
@@ -51,20 +51,20 @@ SpaceModel <- R6::R6Class(
       return(invisible(self))
     },
     
-    estimate = function(verbose=T) {
+    estimate = function(verbose = T) {
       stop("Unimplemented abstract method 'estimate'.")
     },
     
     save = function(fileName) {
-      save(self, file=fileName)
+      save(self, file = fileName)
       return(invisible(self))
     },
     
     load = function(fileName) {
-      load(fileName, env=self)
+      load(fileName, env = self)
       return(invisible(self))
       #tempEnv <- new.env()
-      #load(fileName, env=tempEnv)
+      #load(fileName, env = tempEnv)
       #return(invisible(tempEnv$self))
     },
 
@@ -73,15 +73,15 @@ SpaceModel <- R6::R6Class(
       return(invisible(self))
     },
 
-    getObserved = function(tag="obs") {
+    getObserved = function(tag = "obs") {
       stop("Unimplemented abstract method 'getFittedObserved'.")
     },
     
-    getFittedResponse = function(tag="obs") {
+    getFittedResponse = function(tag = "obs") {
       stop("Unimplemented abstract method 'getFittedResponse'.")
     },
     
-    getFittedLinearPredictor = function(tag="obs") {
+    getFittedLinearPredictor = function(tag = "obs") {
       stop("Unimplemented abstract method 'getFittedLinearPredictor'.")
     },
     

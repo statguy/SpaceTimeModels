@@ -46,8 +46,8 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       timeIndex <- time - min(time) + 1
       nTime <- length(unique(timeIndex))
       
-      fieldIndex <- inla.spde.make.index("spatial", n.spde = self$getSPDEObject()$n.spde, n.group = nTime)
-      A <- inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc = coordinates, group = timeIndex, n.group = nTime)
+      fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDEObject()$n.spde, n.group = nTime)
+      A <- INLA::inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc = coordinates, group = timeIndex, n.group = nTime)
       
       effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(fieldIndex)
       AList <- if (!is.null(modelMatrix)) {
@@ -86,40 +86,29 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
         list(1)
       }
       else {
-        A <- inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), group = predTimeIndex, n.group = nTime)
+        A <- INLA::inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), group = predTimeIndex, n.group = nTime)
         list(A)
       }
 
       self$addStack(data = dataList, A = AList, effects = effects, tag = tag)
-      
-      #st.est = inla.stack(data = list(y = y),
-      #                    + A = list(A, 1),
-      #                    + effects = list(c(mesh.index, list(intercept = 1)),
-      #                                     + list(cov = covariate)),
-      #                    + tag = "est")
-      #st.pred = inla.stack(data = list(y = NA),
-      #                        + A = list(1),
-      #                        + effects = list(c(mesh.index, list(intercept = 1))),
-      #                        + tag = "pred")
-      
-      
+
       return(invisible(self))
     },
     
     getSPDEResult = function() {
       if (is.null(self$result) || is.null(self$spde))
         stop("The model has not been estimated.")
-      return(inla.spde2.result(self$result, "spatial", self$spde))
+      return(INLA::inla.spde2.result(self$result, "spatial", self$spde))
     },
     
     summarySpatialParameters = function() {
       spdeResult <- self$getSPDEResult()
       range <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.range.nominal[[1]], coordinatesScale = self$getSpatialMesh()$getScale())
       variance <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.variance.nominal[[1]])
-      kappa <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.kappa[[1]], coordinatesScale = 1/self$getSpatialMesh()$getScale())
+      kappa <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.kappa[[1]], coordinatesScale = 1 / self$getSpatialMesh()$getScale())
       tau <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.tau[[1]])
       x <- rbind(kappa = kappa, tau = tau, range = range, variance = variance)
-      colnames(x) <- c("mean","sd","0.025quant","0.5quant","0.975quant","mode")
+      colnames(x) <- c("mean", "sd", "0.025quant", "0.5quant", "0.975quant", "mode")
       x
     },
     
@@ -152,38 +141,39 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       
       timeIndex <- if (missing(timeIndex)) {
         index <- self$getIndex(tag = tag)
-        inla.stack.RHS(self$getFullStack())$spatial.group[index]
+        INLA::inla.stack.RHS(self$getFullStack())$spatial.group[index]
       }
       else timeIndex
       
       x <- data.frame(time = timeIndex, observed = observed, fitted = fitted)
-      df <- x %>% group_by(time) %>% summarise(observed = sum(observed, na.rm = T), fitted = sum(fitted, na.rm = T))
+      df <- x %>% dplyr::group_by(time) %>% 
+        dplyr::summarise(observed = sum(observed, na.rm = T), fitted = sum(fitted, na.rm = T))
       return(df)
     },
     
     plotTemporalVariation = function(timeIndex, tag = "obs") {
       x <- self$summaryTemporalVariation(timeIndex = timeIndex, tag = tag)
-      p <- x %>% gather(observed, fitted, value = "value", key = "variable") %>% 
-        ggplot(aes(time, value, colour = variable)) + geom_line()
+      p <- x %>% tidyr::gather(observed, fitted, value = "value", key = "variable") %>% 
+        ggplot2::ggplot(aes(time, value, colour = variable)) + ggplot2::geom_line()
       return(p)
     },
     
     plotSpatialVariation = function(variable = "mean", timeIndex, xlim, ylim, dims, tag = "pred") {
       str <- self$getSpatialVariationRaster(variable = variable, timeIndex = timeIndex, tag = tag)
-      p <- gplot(str$getLayer(1)) + geom_raster(aes(fill = value))
+      p <- rasterVis::gplot(str$getLayer(1)) + ggplot2::geom_raster(aes(fill = value))
       return(p)
     },
     
-    getSpatialVariationRaster = function(variable = "mean", timeIndex, timeLabels, height = 100, width = 100, tag = "pred") {
+    getSpatialVariationRaster = function(variable = "mean", timeIndex, timeLabels, template = self$getSpatialMesh()$getKnots(), height = 100, width = 100, crs = self$getSpatialMesh()$getCRS(), tag = "pred") {
       predictedValues <- self$getFittedResponse(variable = variable, tag = tag)
       meshNodes <- self$getSpatialMesh()$getINLAMesh()$n
       maxTimeIndex <- length(na.omit(unique(INLA::inla.stack.data(self$getFullStack())$spatial.group)))
       predictions <- INLA::inla.vector2matrix(predictedValues, nrow = meshNodes, ncol = maxTimeIndex)
-      if (!missing(timeIndex)) predictions <- predictions[,timeIndex, drop=F]
+      if (!missing(timeIndex)) predictions <- predictions[,timeIndex, drop = F]
       
-      str <- SpaceTimeRaster$new(sp = self$getSpatialMesh()$getKnots(), height = height, width = width)
-      str$project(self$getSpatialMesh(), predictions, timeLabels = timeLabels)
-      return(str)
+      r <- SpaceTimeModels::SpaceTimeRaster$new(x = template, height = height, width = width, crs = crs)
+      r$project(self$getSpatialMesh(), predictions, timeLabels = timeLabels)
+      return(r)
     }
   )
 )

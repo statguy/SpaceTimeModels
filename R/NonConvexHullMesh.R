@@ -12,24 +12,24 @@ NonConvexHullMesh <- R6::R6Class(
   lock_objects = FALSE,
   inherit = SpaceTimeModels::Mesh,
   public = list(
-    construct = function(cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, convex) {
+    construct = function(cutoff = NULL, maxEdge = NULL, offset = NULL, minAngle = NULL, convex) {
       if (missing(cutoff))
         stop("Required argument 'cutoff' missing.")
       if (missing(maxEdge))
         stop("Required argument 'maxEdge' missing.")
       
       meshCoordinates <- self$getMeshKnots()
-      boundary <- inla.nonconvex.hull(points=meshCoordinates, convex=convex)
-      self$mesh <- inla.mesh.2d(boundary=boundary,
-                                   cutoff=SpaceTimeModels::nullScale(cutoff, self$getScale()),
-                                   max.edge=SpaceTimeModels::nullScale(maxEdge, self$getScale()),
-                                   offset=SpaceTimeModels::nullScale(offset, self$getScale()),
-                                   min.angle=minAngle)
+      boundary <- INLA::inla.nonconvex.hull(points = meshCoordinates, convex = convex)
+      self$mesh <- INLA::inla.mesh.2d(boundary = boundary,
+                                      cutoff = SpaceTimeModels::nullScale(cutoff, self$getScale()),
+                                      max.edge = SpaceTimeModels::nullScale(maxEdge, self$getScale()),
+                                      offset  = SpaceTimeModels::nullScale(offset, self$getScale()),
+                                      min.angle = minAngle)
     },
     
-    initialize = function(..., cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, convex) {
+    initialize = function(..., cutoff = NULL, maxEdge = NULL, offset = NULL, minAngle = NULL, convex) {
       super$initialize(...)
-      self$construct(cutoff=cutoff, maxEdge=maxEdge, offset=offset, minAngle=minAngle, convex=convex)
+      self$construct(cutoff = cutoff, maxEdge = maxEdge, offset = offset, minAngle = minAngle, convex = convex)
     }
   )
 )

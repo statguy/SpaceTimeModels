@@ -33,11 +33,11 @@ ContinuousSpaceModel <- R6::R6Class(
     
     addStack = function(data, A, effects, tag) {
       obsStack <- inla.stack(data = data, A = A, effects = effects, tag = tag)
-      self$fullStack <- if (is.null(self$fullStack)) inla.stack(obsStack)
+      self$fullStack <- if (is.null(self$fullStack)) INLA::inla.stack(obsStack)
       else {
         if (tag %in% names(self$fullStack$data$index))
           stop("Stack with tag '", tag, "' already exists.")
-        inla.stack(self$fullStack, obsStack)
+        INLA::inla.stack(self$fullStack, obsStack)
       }
       return(invisible(self))
     },
@@ -78,7 +78,7 @@ ContinuousSpaceModel <- R6::R6Class(
       self$covariatesModel <- covariatesModel
       if (length(SpaceTimeModels::getCovariateNames(self$covariatesModel)) > 0 && missing(covariates))
         stop("Covariates specified in the model but argument 'covariates' missing.")
-      covariates <- colnames(getINLAModelMatrix(covariatesModel, covariates))
+      covariates <- colnames(SpaceTimeModels::getINLAModelMatrix(covariatesModel, covariates))
       intercept <- if (attr(x, "intercept")[1] == 0) NULL else "intercept"
       randomEffect <- self$getRandomEffectTerm()
       self$linearModel <- reformulate(termlabels = c(intercept, covariates, randomEffect), response = "response", intercept = FALSE)
@@ -121,7 +121,7 @@ ContinuousSpaceModel <- R6::R6Class(
       if (missing(sp))
         stop("Required argument 'sp' must be given.")
       if (!inherits(sp, "SpatialPoints"))
-        stop("Argument 'sp' must be of class 'SpatialPoints'.")
+        stop("Argument 'sp' must be of class 'sp::SpatialPoints'.")
       if (missing(response))
         stop("Required argument 'response' must be given.")
       
@@ -132,8 +132,8 @@ ContinuousSpaceModel <- R6::R6Class(
       coordinates <- self$scaleCoordinates(sp::coordinates(sp))
       SpaceTimeModels::assertCompleteCovariates(self$covariatesModel, covariates)
       modelMatrix <- SpaceTimeModels::getINLAModelMatrix(self$covariatesModel, covariates)
-      fieldIndex <- inla.spde.make.index("spatial", n.spde = self$getSPDEObject()$n.spde)
-      A <- inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc=coordinates)
+      fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDEObject()$n.spde)
+      A <- INLA::inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc=coordinates)
       
       effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(fieldIndex)
       AList <- if (!is.null(modelMatrix)) {
@@ -155,13 +155,13 @@ ContinuousSpaceModel <- R6::R6Class(
       if (missing(sp))
         stop("Required argument 'sp' must be given.")
       if (!inherits(sp, "SpatialPoints"))
-        stop("Argument 'sp' must be of class 'SpatialPoints'.")
+        stop("Argument 'sp' must be of class 'sp::SpatialPoints'.")
       
       dataList <- list(response=NA)
       if (!is.null(self$getLinkFunction())) dataList$link <- self$getLinkFunction()
       
       coordinates <- self$scaleCoordinates(sp::coordinates(sp))
-      fieldIndex <- inla.spde.make.index("spatial", n.spde = self$getSPDEObject()$n.spde)
+      fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDEObject()$n.spde)
       effects <- if (self$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(fieldIndex, coordinates))
       AList <- list(1)
       
@@ -170,16 +170,19 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))
     },
         
-    estimate = function(verbose = F) {
+    estimate = function(waic = TRUE, dic = FALSE, cpo = FALSE, verbose = FALSE) {
       if (is.null(self$getFullStack()))
         stop("Data stack must be specified first.")
       
       dataStack <- inla.stack.data(self$getFullStack(), spde = self$getSPDEObject())
-      self$result <- try(inla(self$getLinearModel(), family = self$getLikelihood(), data = dataStack, E = dataStack$E,
-                                 control.predictor = list(A = inla.stack.A(self$getFullStack()), link = 1, compute = TRUE),
-                                 control.compute = list(waic = TRUE, config = TRUE),
-                                 control.inla = list(reordering = "metis"),
-                                 verbose = verbose))
+      self$result <- try(
+        INLA::inla(self$getLinearModel(), family = self$getLikelihood(), data = dataStack, E = dataStack$E,
+                   control.predictor = list(A = INLA::inla.stack.A(self$getFullStack()), link = 1, compute = TRUE),
+                   control.compute = list(waic = waic, dic = dic, cpo = cpo, config = TRUE),
+                   control.inla = list(reordering = "metis"),
+                   verbose = verbose)
+        )
+      
       if (inherits(self$result, "try-error") || self$result$ok == FALSE)
         stop("Estimation failed. Use verbose=TRUE to find the possible cause.")
       
@@ -190,7 +193,7 @@ ContinuousSpaceModel <- R6::R6Class(
       if (is.null(self$getFullStack()))
         stop("No index has been specified.")
       
-      index <- inla.stack.index(self$getFullStack(), tag)$data
+      index <- INLA::inla.stack.index(self$getFullStack(), tag)$data
       if (is.null(index))
         stop(paste("No index found with tag", obs))
       return(index)
@@ -198,14 +201,14 @@ ContinuousSpaceModel <- R6::R6Class(
     
     getOffset = function(tag = "obs") {
       index <- self$getIndex(tag)
-      offset <- inla.stack.LHS(self$getFullStack())$E[index]
+      offset <- INLA::inla.stack.LHS(self$getFullStack())$E[index]
       if (is.null(offset) || all(is.na(offset))) offset <- 1
       offset
     },
 
     getObserved = function(tag = "obs") {
       index <- self$getIndex(tag)
-      inla.stack.LHS(self$getFullStack())$response[index]
+      INLA::inla.stack.LHS(self$getFullStack())$response[index]
     },
 
     getFittedResponse = function(variable = "mean", tag = "obs") {
@@ -231,8 +234,16 @@ ContinuousSpaceModel <- R6::R6Class(
       return(self$getResult()$summary.hyperpar)
     },
     
+    getDIC = function() {
+      return(self$getResult()$dic)
+    },
+    
     getWAIC = function() {
       return(self$getResult()$waic)
+    },
+    
+    getCPO = function() {
+      return(self$getResult()$cpo)
     }
   )
 )

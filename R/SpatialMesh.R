@@ -12,7 +12,7 @@ SpatialMesh <- R6::R6Class(
   lock_objects = FALSE,
   inherit = SpaceTimeModels::Mesh,
   public = list(
-    construct = function(cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, locDomain=NULL) {
+    construct = function(cutoff = NULL, maxEdge = NULL, offset = NULL, minAngle = NULL, locDomain = NULL) {
       if (missing(cutoff))
         stop("Required argument 'cutoff' missing.")
       if (missing(maxEdge))
@@ -22,17 +22,17 @@ SpatialMesh <- R6::R6Class(
       
       meshCoordinates <- self$getMeshKnots()
       locDomain <- SpaceTimeModels::nullScale(sp::coordinates(locDomain), self$getScale())
-      self$mesh <- inla.mesh.2d(loc=meshCoordinates,
-                                   loc.domain=locDomain,
-                                   cutoff=SpaceTimeModels::nullScale(cutoff, self$getScale()),
-                                   max.edge=SpaceTimeModels::nullScale(maxEdge, self$getScale()),
-                                   offset=SpaceTimeModels::nullScale(offset, self$getScale()),
-                                   min.angle=minAngle)
+      self$mesh <- INLA::inla.mesh.2d(loc = meshCoordinates,
+                                      loc.domain = locDomain,
+                                      cutoff = SpaceTimeModels::nullScale(cutoff, self$getScale()),
+                                      max.edge = SpaceTimeModels::nullScale(maxEdge, self$getScale()),
+                                      offset = SpaceTimeModels::nullScale(offset, self$getScale()),
+                                      min.angle = minAngle)
     },
 
-    initialize = function(..., cutoff=NULL, maxEdge=NULL, offset=NULL, minAngle=NULL, locDomain=NULL) {
+    initialize = function(..., cutoff = NULL, maxEdge = NULL, offset = NULL, minAngle = NULL, locDomain = NULL) {
       super$initialize(...)
-      self$construct(cutoff=cutoff, maxEdge=maxEdge, offset=offset, minAngle=minAngle, locDomain=locDomain)
+      self$construct(cutoff = cutoff, maxEdge = maxEdge, offset = offset, minAngle = minAngle, locDomain = locDomain)
     }
   )
 )
