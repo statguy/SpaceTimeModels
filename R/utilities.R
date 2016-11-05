@@ -96,3 +96,30 @@ theme_raster <- function(base_size = 12, base_family = "", ...) {
       ...
     )
 }
+
+# Taken from https://groups.google.com/forum/#!topic/r-inla-discussion-group/cPU0iJA2UqY
+#' @export local.inla.spde2.matern.new
+#' @keywords internal
+# - YOU MUST SET rho0 , e.g. to half the length/width of your space
+# - You may reduce sig0 to have less spatial effect
+# - You may increase rho0 additionally, to make the spatial effect smoother
+local.inla.spde2.matern.new <- function(mesh, alpha=2, prior.pc.rho, prior.pc.sig) {
+  # Call inla.spde2.matern with range and standard deviation parametrization
+  d = INLA:::inla.ifelse(inherits(mesh, "inla.mesh"), 2, 1)
+  nu = alpha-d/2
+  kappa0 = log(8*nu)/2
+  tau0   = 0.5*(lgamma(nu)-lgamma(nu+d/2)-d/2*log(4*pi))-nu*kappa0
+  spde   = inla.spde2.matern(mesh = mesh,
+                             B.tau   = cbind(tau0,   nu,  -1),
+                             B.kappa = cbind(kappa0, -1, 0))
+  
+  # Change prior information
+  param = c(prior.pc.rho, prior.pc.sig)
+  spde$f$hyper.default$theta1$prior = "pcspdega"
+  spde$f$hyper.default$theta1$param = param
+  spde$f$hyper.default$theta1$initial = log(prior.pc.rho[1])+1
+  spde$f$hyper.default$theta2$initial = log(prior.pc.sig[1])-1
+  
+  # End and return
+  return(invisible(spde))  
+}

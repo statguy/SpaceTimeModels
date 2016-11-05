@@ -12,6 +12,10 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
   lock_objects = FALSE,
   inherit = SpaceTimeModels::ContinuousSpaceTimeModel,
   public = list(
+    setTemporalPrior = function() {
+      stop("TODO")
+    },
+    
     getRandomEffectTerm = function() {
       return("f(spatial, model=spde, group=spatial.group, control.group=list(model=\"ar1\"))")
     },
@@ -26,7 +30,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       
       if (is.null(self$getSpatialMesh()))
         stop("Mesh must be defined first.")
-      if (is.null(self$getSPDEObject()))
+      if (is.null(self$getSPDE()))
         stop("Spatial prior must be defined first.")
       if (is.null(self$covariatesModel))
         stop("Covariates model must be defined first.")
@@ -46,7 +50,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       timeIndex <- time - min(time) + 1
       nTime <- length(unique(timeIndex))
       
-      fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDEObject()$n.spde, n.group = nTime)
+      fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDE()$n.spde, n.group = nTime)
       A <- INLA::inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc = coordinates, group = timeIndex, n.group = nTime)
       
       effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(fieldIndex)
@@ -74,7 +78,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       time <- time(sp)
       timeIndex <- time - min(time) + 1
       nTime <- length(unique(timeIndex))
-      fieldIndex <- inla.spde.make.index("spatial", n.spde = self$getSPDEObject()$n.spde, n.group = nTime) # TODO: get index from obs stack
+      fieldIndex <- inla.spde.make.index("spatial", n.spde = self$getSPDE()$n.spde, n.group = nTime) # TODO: get index from obs stack
 
       effects <- if (missing(predTimeIndex)) {
         if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(c(fieldIndex))

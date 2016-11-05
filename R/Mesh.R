@@ -36,6 +36,13 @@ Mesh <- R6::R6Class(
     getCRS = function() return(self$crs),
     getNumNodes = function() return(self$getINLAMesh()$n),
     
+    getRange = function() {
+      return(c(diff(base::range(self$getINLAMesh()$loc[,1])),
+               diff(base::range(self$getINLAMesh()$loc[,2]))))
+    },
+
+    getSize = function() return(min(self$getRange())),
+    
     plot = function() {
       if (is.null(self$mesh))
         stop("Mesh must be constructed first.")

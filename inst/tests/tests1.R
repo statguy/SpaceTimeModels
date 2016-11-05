@@ -3,13 +3,13 @@
 library(SpaceTimeModels)
 
 # Download data
-Piemonte_data <- read.csv("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/Piemonte_data_byday.csv", header=TRUE, sep=",")
-coordinates <- read.csv("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/coordinates.csv", header=TRUE, sep=",")
-borders <- read.table("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/Piemonte_borders.csv", header=TRUE, sep=",")
-Piemonte_data_validation <-read.table("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/Piemonte_data_byday_validation.csv", header=TRUE, sep=",")
-coordinates_validation <-read.table("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/coordinates_validation.csv", header=TRUE, sep=",")
-rownames(coordinates) = coordinates[,"Station.ID"]
-rownames(coordinates_validation) = coordinates_validation[,"Station.ID"]
+Piemonte_data <- read.csv("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/Piemonte_data_byday.csv", header = TRUE, sep = ",")
+coordinates <- read.csv("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/coordinates.csv", header = TRUE, sep = ",")
+borders <- read.table("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/Piemonte_borders.csv", header = TRUE, sep = ",")
+Piemonte_data_validation <- read.table("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/Piemonte_data_byday_validation.csv", header = TRUE, sep = ",")
+coordinates_validation <- read.table("http://www.math.ntnu.no/inla/r-inla.org/case-studies/Cameletti2012/coordinates_validation.csv", header = TRUE, sep = ",")
+rownames(coordinates) <- coordinates[,"Station.ID"]
+rownames(coordinates_validation) <- coordinates_validation[,"Station.ID"]
 
 # Prepare data
 n_stations <- length(coordinates$Station.ID)
@@ -17,7 +17,7 @@ n_stations_val <- length(coordinates_validation$Station.ID)
 n_data <- length(Piemonte_data$Station.ID)
 n_days <- as.integer(n_data/n_stations)
 Piemonte_data$logPM10 <- log(Piemonte_data$PM10)
-Piemonte_data$time <- rep(1:n_days, each=n_stations)
+Piemonte_data$time <- rep(1:n_days, each = n_stations)
 Piemonte_data_validation$logPM10 <- log(Piemonte_data_validation$PM10)
 Piemonte_data_validation$time <- rep(1:n_days,each=n_stations_val)
 
@@ -39,7 +39,7 @@ if (F) {
 }
 
 # Build estimation mesh
-mesh <- SpaceTimeModels::SpatialMesh$new(knots=obs, locDomain=sp::SpatialPoints(borders), offset=c(10, 140), maxEdge=c(50, 1000), minAngle=c(26, 21), cutoff=0)
+mesh <- SpaceTimeModels::SpatialMesh$new(knots = obs, locDomain = sp::SpatialPoints(borders), offset = c(10, 140), maxEdge = c(50, 1000), minAngle = c(26, 21), cutoff = 0)
 mesh$plot()
 
 # Build model
@@ -62,21 +62,21 @@ model$getLinearModel()
 # Estimate the model
 model$estimate(verbose = T)
 
-# Get summary of the estimated parameters
+# Get a summary of the estimated parameters
 model$summary()
 model$summarySpatialParameters()
 
-# Print observed and fitted values in time
+# Print the observed and fitted values in time
 model$summaryTemporalVariation(timeIndex = time(obs))
 
-# Plot temporal variation
+# Plot the temporal variation
 model$plotTemporalVariation(timeIndex = time(obs))
 
-# Quick plot estimates on a map
+# Quick plot the estimates on a map
 model$plotSpatialVariation(timeIndex = 1)
 model$plotSpatialVariation(timeIndex = 2)
 
-# Plot estimates on a map more neatly
+# Plot the estimates on a map more neatly
 rasters <- model$getSpatialVariationRaster(template = raster::extend(raster::extent(as.matrix(borders)), 10), width = 200, height = 200)
 rasterVis::gplot(rasters$getLayer(1)) + ggplot2::geom_raster(aes(fill = value)) +
   ggplot2::geom_path(data = borders, aes(UTM_X, UTM_Y)) +

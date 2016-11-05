@@ -43,7 +43,7 @@ ContinuousSpaceModel <- R6::R6Class(
     },
     
     getSpatialMesh = function() return(self$spaceMesh),
-    getSPDEObject = function() return(self$spde),
+    getSPDE = function() return(self$spde),
     getFullStack = function() return(self$fullStack),
     
     clearStack = function() {
@@ -52,11 +52,22 @@ ContinuousSpaceModel <- R6::R6Class(
     },
     
     setSpatialMesh = function(mesh) {
+      if (missing(mesh))
+        stop("Argument 'mesh' must be specified.")
       if (!inherits(mesh, "Mesh"))
-        stop("Argument 'mesh' must be of class 'Mesh'.")
+        stop("Argument 'mesh' must be of class 'SpaceTimeModels::Mesh' or descedant.")
       if (is.null(mesh$getINLAMesh()))
         stop("Mesh has not been initialized.")
       self$spaceMesh <- mesh
+      return(invisible(self))
+    },
+    
+    setSPDE = function(spde) {
+      if (missing(spde))
+        stop("Argument 'spde' must be specified.")
+      if (!inherits(spde, "inla.spde2"))
+        stop("Argument 'spde' must be of class 'INLA::inla.spde'.")
+      self$spde <- spde
       return(invisible(self))
     },
     
@@ -86,7 +97,17 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))
     },
     
-    setSpatialPrior = function(range, rangeFactor = 5) {
+    setSpatialPrior = function(rho, rho.init = 0.5, sigma = 1, sigma.init = 0.5) {
+      mesh <- self$getSpatialMesh()
+      if (is.null(mesh))
+        stop("Mesh must be defined first.")
+      rho <- ifelse(missing(rho), mesh$getSize() / 2, rho)
+      spde <- SpaceTimeModels::local.inla.spde2.matern.new(mesh = mesh$getINLAMesh(), prior.pc.rho = c(rho, rho.init), prior.pc.sig = c(sigma, sigma.init))
+      self$setSPDE(spde)
+      return(invisible(self))
+    },
+    
+    DEPRECATED_setSpatialPrior = function(range, rangeFactor = 5) {
       if (is.null(self$getSpatialMesh()))
         stop("Mesh must be defined first.")
       
@@ -132,7 +153,7 @@ ContinuousSpaceModel <- R6::R6Class(
       coordinates <- self$scaleCoordinates(sp::coordinates(sp))
       SpaceTimeModels::assertCompleteCovariates(self$covariatesModel, covariates)
       modelMatrix <- SpaceTimeModels::getINLAModelMatrix(self$covariatesModel, covariates)
-      fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDEObject()$n.spde)
+      fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDE()$n.spde)
       A <- INLA::inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc=coordinates)
       
       effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(fieldIndex)
@@ -161,7 +182,7 @@ ContinuousSpaceModel <- R6::R6Class(
       if (!is.null(self$getLinkFunction())) dataList$link <- self$getLinkFunction()
       
       coordinates <- self$scaleCoordinates(sp::coordinates(sp))
-      fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDEObject()$n.spde)
+      fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDE()$n.spde)
       effects <- if (self$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(fieldIndex, coordinates))
       AList <- list(1)
       
@@ -174,7 +195,7 @@ ContinuousSpaceModel <- R6::R6Class(
       if (is.null(self$getFullStack()))
         stop("Data stack must be specified first.")
       
-      dataStack <- inla.stack.data(self$getFullStack(), spde = self$getSPDEObject())
+      dataStack <- inla.stack.data(self$getFullStack(), spde = self$getSPDE())
       self$result <- try(
         INLA::inla(self$getLinearModel(), family = self$getLikelihood(), data = dataStack, E = dataStack$E,
                    control.predictor = list(A = INLA::inla.stack.A(self$getFullStack()), link = 1, compute = TRUE),
