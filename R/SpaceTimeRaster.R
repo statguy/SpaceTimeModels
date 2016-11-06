@@ -38,8 +38,12 @@ SpaceTimeRaster <- R6::R6Class(
       return(self$layers[[index]])
     },
     
-    getLayers = function() {
-      return(self$layers)
+    getLayers = function() return(self$layers),
+    getCellArea = function() return(prod(raster::res(self$layers))),
+
+    scaleCells = function(w) {
+      self$setLayers(self$getLayers() * w)
+      return(invisible(self))  
     },
     
     project = function(mesh, predictions, timeLabels) {
@@ -47,12 +51,16 @@ SpaceTimeRaster <- R6::R6Class(
       if (missing(predictions)) stop("Required parameter 'predictions' missing.")
       
       inlaMesh <- if (inherits(mesh, "Mesh")) mesh$getINLAMesh()
-      else if (inherits(mesh, "inla.mesh")) mesh
-      else stop("Parameter 'mesh' must be of type 'SpaceTimeModels::Mesh' or 'INLA::inla.mesh'.")
+      else stop("Parameter 'mesh' must be of type 'SpaceTimeModels::Mesh'.")
+      #else if (inherits(mesh, "inla.mesh")) mesh
+      #else stop("Parameter 'mesh' must be of type 'SpaceTimeModels::Mesh' or 'INLA::inla.mesh'.")
+      
+      #scale <- ifelse(inherits(mesh, "Mesh"), 1 / mesh$getScale(), 1)
+      scale <- 1 / mesh$getScale()
       projector <- INLA::inla.mesh.projector(inlaMesh,
-                                             dims = c(ncol(self$template), nrow(self$template)),
-                                             xlim = c(xmin(self$template), xmax(self$template)),
-                                             ylim = c(ymin(self$template), ymax(self$template)))
+                                             dims = c(raster::ncol(self$template), raster::nrow(self$template)),
+                                             xlim = c(raster::xmin(self$template), raster::xmax(self$template)) * scale,
+                                             ylim = c(raster::ymin(self$template), raster::ymax(self$template)) * scale)
       
       if (!inherits(predictions, "matrix")) stop("Parameter 'predictions' must be of type 'matrix'.")
       

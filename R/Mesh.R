@@ -18,7 +18,7 @@ Mesh <- R6::R6Class(
     #  stop("Unimplemented abstract method 'construct'.")
     #}
     
-    initialize = function(knots, knotsScale=1) {
+    initialize = function(knots, knotsScale = 1) {
       if (missing(knots))
         stop("Required argument 'knots' missing.")
       if (!inherits(knots, c("SpatialPoints", "ST")))
