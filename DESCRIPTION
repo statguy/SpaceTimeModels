@@ -19,6 +19,7 @@ Depends:
     tidyr,
     plyr,
     dplyr,
+    stringr,
     reshape2,
     ggplot2,
     rasterVis

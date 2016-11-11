@@ -71,7 +71,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       if (!inherits(sp, "STI"))
         stop("Argument 'sp' must be of class 'STI'.")
       
-      dataList <- list(response=NA)
+      dataList <- list(response = NA)
       if (!is.null(self$getLinkFunction())) dataList$link <- self$getLinkFunction()
       
       coordinates <- self$scaleCoordinates(sp::coordinates(sp)) # TODO: sp not required parameter
@@ -84,6 +84,8 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
         if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(c(fieldIndex))
       }
       else {
+        # TODO: fix
+        # TODO: allow defining covariates
         if (self$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(fieldIndex, coordinates))
       }
       AList <- if (missing(predTimeIndex)) {
@@ -97,23 +99,6 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       self$addStack(data = dataList, A = AList, effects = effects, tag = tag)
 
       return(invisible(self))
-    },
-    
-    getSPDEResult = function() {
-      if (is.null(self$result) || is.null(self$spde))
-        stop("The model has not been estimated.")
-      return(INLA::inla.spde2.result(self$result, "spatial", self$spde))
-    },
-    
-    summarySpatialParameters = function() {
-      spdeResult <- self$getSPDEResult()
-      range <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.range.nominal[[1]], coordinatesScale = self$getSpatialMesh()$getScale())
-      variance <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.variance.nominal[[1]])
-      kappa <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.kappa[[1]], coordinatesScale = 1 / self$getSpatialMesh()$getScale())
-      tau <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.tau[[1]])
-      x <- rbind(kappa = kappa, tau = tau, range = range, variance = variance)
-      colnames(x) <- c("mean", "sd", "0.025quant", "0.5quant", "0.975quant", "mode")
-      x
     },
     
     summary = function() {

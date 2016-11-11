@@ -73,8 +73,15 @@ ContinuousSpaceModel <- R6::R6Class(
     
     setCovariatesModel = function(covariatesModel, covariates) {
       if (missing(covariatesModel)) covariatesModel <- ~ 1
+      else { 
+        if (!inherits(covariatesModel, "formula"))
+          stop("Argument 'covariatesModel' must be class of 'formula' or descedant.")
+      }
+      
       x <- if (missing(covariates)) terms(covariatesModel)
       else {
+        if (!inherits(covariates, "data.frame"))
+          stop("Argument 'covariates' must be class of 'data.frame' or descedant.")
         SpaceTimeModels::assertCompleteCovariates(covariatesModel, covariates)
         terms(covariatesModel, data = covariates)
       }
@@ -154,7 +161,7 @@ ContinuousSpaceModel <- R6::R6Class(
       SpaceTimeModels::assertCompleteCovariates(self$covariatesModel, covariates)
       modelMatrix <- SpaceTimeModels::getINLAModelMatrix(self$covariatesModel, covariates)
       fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDE()$n.spde)
-      A <- INLA::inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc=coordinates)
+      A <- INLA::inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), loc = coordinates)
       
       effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(fieldIndex)
       AList <- if (!is.null(modelMatrix)) {
@@ -178,12 +185,14 @@ ContinuousSpaceModel <- R6::R6Class(
       if (!inherits(sp, "SpatialPoints"))
         stop("Argument 'sp' must be of class 'sp::SpatialPoints'.")
       
-      dataList <- list(response=NA)
+      dataList <- list(response = NA)
       if (!is.null(self$getLinkFunction())) dataList$link <- self$getLinkFunction()
       
       coordinates <- self$scaleCoordinates(sp::coordinates(sp))
       fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDE()$n.spde)
-      effects <- if (self$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(fieldIndex, coordinates))
+      
+      # TODO: allow defining covariates
+      effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(c(fieldIndex))
       AList <- list(1)
       
       self$addStack(data = dataList, A = AList, effects = effects, tag = tag)
@@ -265,6 +274,23 @@ ContinuousSpaceModel <- R6::R6Class(
     
     getCPO = function() {
       return(self$getResult()$cpo)
+    },
+    
+    getSPDEResult = function() {
+      if (is.null(self$result) || is.null(self$spde))
+        stop("The model has not been estimated.")
+      return(INLA::inla.spde2.result(self$result, "spatial", self$spde))
+    },
+    
+    summarySpatialParameters = function() {
+      spdeResult <- self$getSPDEResult()
+      range <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.range.nominal[[1]], coordinatesScale = self$getSpatialMesh()$getScale())
+      variance <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.variance.nominal[[1]])
+      kappa <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.kappa[[1]], coordinatesScale = 1 / self$getSpatialMesh()$getScale())
+      tau <- SpaceTimeModels::summaryINLAParameter(spdeResult$marginals.tau[[1]])
+      x <- rbind(kappa = kappa, tau = tau, range = range, variance = variance)
+      colnames(x) <- c("mean", "sd", "0.025quant", "0.5quant", "0.975quant", "mode")
+      x
     }
   )
 )

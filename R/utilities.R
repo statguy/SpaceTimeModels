@@ -14,7 +14,8 @@ nullScale <- function(x, y) {
 getCovariateNames = function(covariatesModel, covariates) {
   x <- if (missing(covariates) || is.null(covariates)) terms(covariatesModel)
   else terms(covariatesModel, data = covariates)
-  return(attr(x, "term.labels"))
+  y <- attr(x, "term.labels")
+  return(str_match(y, "^`*(.+?)`*$")[,2]) # Remove backticks
 }
 
 #' @export getINLAModelMatrix
@@ -63,9 +64,12 @@ summaryINLAParameter <- function(marginal, fun = identity, coordinatesScale = 1)
 assertCompleteCovariates <- function(covariatesModel, covariates) {
   #if (inherits(covariates, "STIDF") == FALSE)
   #  stop("Covariates must be of class STIDF or a subclass.")
+  if (!missing(covariates) && !inherits(covariates, "data.frame") == FALSE)
+    stop("Argument 'covariates' must be of class 'data.frame' or descedant.")
   x <- terms(covariatesModel, data = covariates)
   #complete <- complete.cases(covariates@data[,attr(x, "term.labels"), drop = F])
-  complete <- complete.cases(covariates[,attr(x, "term.labels"), drop = F])
+  #complete <- complete.cases(covariates[,attr(x, "term.labels"), drop = F])
+  complete <- complete.cases(covariates[,SpaceTimeModels::getCovariateNames(x), drop = F])
   if (any(complete == FALSE))
     stop("Covariates cannot contain missing data.")
 }
