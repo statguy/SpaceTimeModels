@@ -96,10 +96,10 @@ ContinuousSpaceModel <- R6::R6Class(
       self$covariatesModel <- covariatesModel
       if (length(SpaceTimeModels::getCovariateNames(self$covariatesModel)) > 0 && missing(covariates))
         stop("Covariates specified in the model but argument 'covariates' missing.")
-      covariates <- colnames(SpaceTimeModels::getINLAModelMatrix(covariatesModel, covariates))
+      covariateNames <- colnames(SpaceTimeModels::getINLAModelMatrix(covariatesModel, covariates))
       intercept <- if (attr(x, "intercept")[1] == 0) NULL else "intercept"
       randomEffect <- self$getRandomEffectTerm()
-      self$linearModel <- reformulate(termlabels = c(intercept, covariates, randomEffect), response = "response", intercept = FALSE)
+      self$linearModel <- reformulate(termlabels = c(intercept, covariateNames, randomEffect), response = "response", intercept = FALSE)
       
       return(invisible(self))
     },
@@ -167,8 +167,7 @@ ContinuousSpaceModel <- R6::R6Class(
       AList <- if (!is.null(modelMatrix)) {
         effects[[2]] <- modelMatrix
         list(A, 1)
-      }
-      else list(A)
+      } else list(A)
       
       self$addStack(data = dataList, A = AList, effects = effects, tag = tag)
       
