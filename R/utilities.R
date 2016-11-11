@@ -15,7 +15,9 @@ getCovariateNames = function(covariatesModel, covariates) {
   x <- if (missing(covariates) || is.null(covariates)) terms(covariatesModel)
   else terms(covariatesModel, data = covariates)
   y <- attr(x, "term.labels")
-  return(str_match(y, "^`*(.+?)`*$")[,2]) # Remove backticks
+  if (str_detect(y, "`"))
+    stop("Covariate names with backticks unsupported.")
+  return(y)
 }
 
 #' @export getINLAModelMatrix
@@ -30,10 +32,10 @@ getINLAModelMatrix = function(covariatesModel, covariates) {
       stop("Covariates data do not match with covariates model.")
     
     modelMatrix <- as.data.frame(model.matrix(covariatesModel, data = covariates))
-    terms <- colnames(modelMatrix)
-    interceptIndex <- terms %in% "(Intercept)"
+    termNames <- colnames(modelMatrix)
+    interceptIndex <- termNames %in% "(Intercept)"
     if (any(interceptIndex)) {
-      terms <- terms[!interceptIndex]
+      termNames <- termNames[!interceptIndex]
       modelMatrix <- modelMatrix[,!interceptIndex, drop = F]
     }
     
@@ -64,8 +66,6 @@ summaryINLAParameter <- function(marginal, fun = identity, coordinatesScale = 1)
 assertCompleteCovariates <- function(covariatesModel, covariates) {
   #if (inherits(covariates, "STIDF") == FALSE)
   #  stop("Covariates must be of class STIDF or a subclass.")
-  if (!missing(covariates) && !inherits(covariates, "data.frame") == FALSE)
-    stop("Argument 'covariates' must be of class 'data.frame' or descedant.")
   x <- terms(covariatesModel, data = covariates)
   #complete <- complete.cases(covariates@data[,attr(x, "term.labels"), drop = F])
   #complete <- complete.cases(covariates[,attr(x, "term.labels"), drop = F])
