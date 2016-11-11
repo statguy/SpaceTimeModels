@@ -16,6 +16,7 @@ ContinuousSpaceModel <- R6::R6Class(
     spaceMesh = NULL,
     spde = NULL,
     fullStack = NULL,
+    interceptPrecision = 0.0,
     
     scaleCoordinates = function(coordinates) {
       return(as.matrix(coordinates) / self$getSpatialMesh()$getScale())
@@ -114,6 +115,13 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))
     },
     
+    setInterceptPrecision = function(prec = 0.0) {
+      self$interceptPrecision <- prec
+      return(invisible(self))
+    },
+    
+    getInterceptPrecision = function() return(self$interceptPrecision),
+    
     DEPRECATED_setSpatialPrior = function(range, rangeFactor = 5) {
       if (is.null(self$getSpatialMesh()))
         stop("Mesh must be defined first.")
@@ -198,7 +206,7 @@ ContinuousSpaceModel <- R6::R6Class(
       
       return(invisible(self))
     },
-        
+    
     estimate = function(waic = TRUE, dic = FALSE, cpo = FALSE, verbose = FALSE) {
       if (is.null(self$getFullStack()))
         stop("Data stack must be specified first.")
@@ -207,6 +215,7 @@ ContinuousSpaceModel <- R6::R6Class(
       self$result <- try(
         INLA::inla(self$getLinearModel(), family = self$getLikelihood(), data = dataStack, E = dataStack$E,
                    control.predictor = list(A = INLA::inla.stack.A(self$getFullStack()), link = 1, compute = TRUE),
+                   control.fixed = list(prec.intercept = self$getInterceptPrecision()),
                    control.compute = list(waic = waic, dic = dic, cpo = cpo, config = TRUE),
                    control.inla = list(reordering = "metis"),
                    verbose = verbose)
