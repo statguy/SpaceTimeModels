@@ -44,17 +44,16 @@ mesh$plot()
 
 # Build model
 formula <- ~ A + UTMX + UTMY + WS + TEMP + HMIX + PREC + EMI
-model <- SpaceTimeModels::ContinuousSpaceDiscreteTimeModel $ 
-  new() $
-  setSpatialMesh(mesh) $
-  setSpatialPrior() $
-#  setSmoothingModel() $
-  setCovariatesModel(formula, obs@data) $
-  setLikelihood("gaussian") $
-  setLinkFunction(gaussian()$link) $
-  addObservationStack(sp = obs, response = obs@data$logPM10, covariates=obs@data) $
-  addValidationStack(sp = val, covariates = val@data) $
-  addPredictionStack(sp = obs)
+model <- SpaceTimeModels::ContinuousSpaceDiscreteTimeModel$new()
+model$setSpatialMesh(mesh)
+model$setSpatialPrior()
+#model$setSmoothingModel()
+model$setCovariatesModel(formula, obs@data)
+model$setLikelihood("gaussian")
+model$setLinkFunction(gaussian()$link)
+model$addObservationStack(sp = obs, response = obs@data$logPM10, covariates = obs@data)
+model$addValidationStack(sp = val, covariates = val@data)
+model$addPredictionStack(sp = obs)
 
 # Print the linear model specification
 model$getLinearModel()
@@ -67,10 +66,16 @@ model$summary()
 model$summarySpatialParameters()
 
 # Print the observed and fitted values in time
-model$summaryTemporalVariation(timeIndex = time(obs))
+fitted.time <- model$summaryTemporalVariation(timeIndex = time(obs)) %>%
+  tidyr::gather(variable, value, -time, observed, fitted)
+fitted.time %>% ggplot2::ggplot() + geom_line(aes(time, value, group = variable, colour = variable)) + theme_bw() + xlab("Time")
 
 # Plot the temporal variation
 model$plotTemporalVariation(timeIndex = time(obs))
+
+# Polt the temporal variation more neatly
+model$summaryTemporalVariation(timeIndex = time(obs))
+
 
 # Quick plot the estimates on a map
 model$plotSpatialVariation(timeIndex = 1)
@@ -87,7 +92,7 @@ rasterVis::gplot(rasters$getLayer(1)) + ggplot2::geom_raster(aes(fill = value)) 
   ggplot2::theme(legend.position = "right", legend.title = element_text(size = 10), legend.text = element_text(size = 10))
 
 # Validate the model
-validation0 <- list(p=rep(NA, length(obs$logPM10)))
+validation0 <- list(p = rep(NA, length(obs$logPM10)))
 etaMean <- model$getFittedLinearPredictor()
 etaSd <- model$getFittedLinearPredictor(variable = "sd")
 validation0$res <- obs$logPM10 - etaMean
@@ -101,8 +106,8 @@ validation$res <- val$logPM10 - etaMean
 validation$res.std <- validation$res / sqrt(etaSd^2 + 1 / model$getFittedHyperparameters()[1, "mean"])
 validation$p <- pnorm(validation$res.std)
 
-validation$rmse <- sqrt(mean(validation$res^2, na.rm=TRUE))
-validation$cor <- cor(val$logPM10, etaMean, use="pairwise.complete.obs", method="pearson")
+validation$rmse <- sqrt(mean(validation$res^2, na.rm = TRUE))
+validation$cor <- cor(val$logPM10, etaMean, use = "pairwise.complete.obs", method = "pearson")
 validation$cover <- mean((validation$p > 0.025) & (validation$p < 0.975), na.rm = TRUE)
 
 validation0

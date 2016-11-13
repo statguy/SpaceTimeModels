@@ -64,8 +64,8 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       
       return(invisible(self))
     },
-    
-    addPredictionStack = function(sp, predTimeIndex, tag = "pred") {
+
+    addPredictionStack = function(sp, tag = "pred") {
       if (missing(sp))
         stop("Required argument 'sp' missing.")
       if (!inherits(sp, "STI"))
@@ -74,30 +74,17 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       dataList <- list(response = NA)
       if (!is.null(self$getLinkFunction())) dataList$link <- self$getLinkFunction()
       
-      coordinates <- self$scaleCoordinates(sp::coordinates(sp)) # TODO: sp not required parameter
-      time <- time(sp)
-      timeIndex <- time - min(time) + 1
-      nTime <- length(unique(timeIndex))
-      fieldIndex <- inla.spde.make.index("spatial", n.spde = self$getSPDE()$n.spde, n.group = nTime) # TODO: get index from obs stack
-
-      effects <- if (missing(predTimeIndex)) {
-        if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(c(fieldIndex))
-      }
-      else {
-        # TODO: fix
-        # TODO: allow defining covariates
-        if (self$hasIntercept()) list(c(fieldIndex, coordinates, list(intercept=1))) else list(c(fieldIndex, coordinates))
-      }
-      AList <- if (missing(predTimeIndex)) {
-        list(1)
-      }
-      else {
-        A <- INLA::inla.spde.make.A(self$getSpatialMesh()$getINLAMesh(), group = predTimeIndex, n.group = nTime)
-        list(A)
-      }
+      coordinates <- self$scaleCoordinates(sp::coordinates(sp))
+      nTime <- length(unique(time(sp)))
+      fieldIndex <- inla.spde.make.index("spatial", n.spde = self$getSPDE()$n.spde, n.group = nTime)
+      effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(c(fieldIndex))
+      mesh <- self$getSpatialMesh()$getINLAMesh()
+      repMeshLocations <- cbind(rep(mesh$loc[,1], nTime), rep(mesh$loc[,2], nTime))
+      timeIndex <- rep(1:nTime, each = nrow(meshLocations))
+      AList <- list(INLA::inla.spde.make.A(mesh, loc = repMeshLocations, group = timeIndex, n.group = nTime))
 
       self$addStack(data = dataList, A = AList, effects = effects, tag = tag)
-
+      
       return(invisible(self))
     },
     
@@ -107,23 +94,6 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       summary(self$result)
     },
 
-    #getFittedResponse = function(tag="obs") {
-    #  data <- super$getFittedResponse(tag=tag)
-    #  #data$time <- self$time
-    #  return(data)
-    #},
-    
-    #getFittedLinearPredictor = function(tag="obs") {
-    #  data <- super$getFittedLinearPredictor(tag=tag)
-    #  #data$time <- self$time
-    #  return(data)
-    #},
-    
-    #getFittedSpatialEffect = function() {
-    #  data <- super$getFittedSpatialEffect()
-    #  return(data)
-    #}
-    
     summaryTemporalVariation = function(variable = "mean", timeIndex, tag = "obs") {
       observed <- self$getObserved(tag = tag)
       fitted <- self$getFittedResponse(variable = variable, tag = tag)
