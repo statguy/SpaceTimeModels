@@ -40,6 +40,8 @@ SpaceModel <- R6::R6Class(
     setLikelihood = function(likelihood) {
       if (missing(likelihood))
         stop("Required argument 'likelihood' missing.")
+      if (!inherits(likelihood, "character"))
+        stop("Argument 'likelihood' must be of type 'character.")
       self$likelihood <- likelihood
       return(invisible(self))
     },
@@ -47,6 +49,8 @@ SpaceModel <- R6::R6Class(
     setLinkFunction = function(link) {
       if (missing(link))
         stop("Required argument 'link' missing.")
+      if (!inherits(link, "character"))
+        stop("Argument 'link' must be of type 'character.")
       self$link <- link
       return(invisible(self))
     },
