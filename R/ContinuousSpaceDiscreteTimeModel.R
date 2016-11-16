@@ -117,12 +117,6 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       return(p)
     },
     
-    plotSpatialVariation = function(variable = "mean", timeIndex, xlim, ylim, dims, tag = "pred") {
-      str <- self$getSpatialVariationRaster(variable = variable, timeIndex = timeIndex, tag = tag)
-      p <- rasterVis::gplot(str$getLayer(1)) + ggplot2::geom_raster(aes(fill = value))
-      return(p)
-    },
-    
     getSpatialVariationRaster = function(variable = "mean", timeIndex, timeLabels, template = self$getSpatialMesh()$getKnots(), height = 100, width = 100, crs = self$getSpatialMesh()$getCRS(), tag = "pred") {
       predictedValues <- self$getFittedResponse(variable = variable, tag = tag)
       meshNodes <- self$getSpatialMesh()$getINLAMesh()$n
@@ -133,6 +127,12 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       r <- SpaceTimeModels::SpaceTimeRaster$new(x = template, height = height, width = width, crs = crs)
       r$project(self$getSpatialMesh(), predictions, timeLabels = timeLabels)
       return(r)
+    },
+    
+    plotSpatialVariation = function(variable = "mean", timeIndex, xlim, ylim, dims, tag = "pred") {
+      str <- self$getSpatialVariationRaster(variable = variable, timeIndex = timeIndex, tag = tag)
+      p <- rasterVis::gplot(str$getLayer(1)) + ggplot2::geom_raster(aes(fill = value))
+      return(p)
     }
   )
 )
