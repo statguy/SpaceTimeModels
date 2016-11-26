@@ -12,12 +12,23 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
   lock_objects = FALSE,
   inherit = SpaceTimeModels::ContinuousSpaceTimeModel,
   public = list(
-    setTemporalPrior = function() {
-      stop("TODO")
+    initialize = function() {
+      self$temporalModel <- "ar1"
+    },
+    
+    setTemporalPrior = function(prior) {
+      self$temporalModel = prior$model
+      self$temporalPrior <- list(theta = list(param = c(prior$mean, prior$sd), initial = prior$initial))
+      return(invisible(self))
     },
     
     getRandomEffectTerm = function() {
-      return("f(spatial, model=spde, group=spatial.group, control.group=list(model=\"ar1\"))")
+      #if (is.null(self$temporalModel)) self$temporalModel <- "ar1"
+      # TODO: substitute with actual values
+      if (is.null(self$temporalPrior))
+        return("f(spatial, model=spde, group=spatial.group, control.group=list(model=self$temporalModel))")
+      else
+        return("f(spatial, model=spde, group=spatial.group, control.group=list(model=self$temporalModel, hyper=self$temporalPrior))")
     },
     
     addObservationStack = function(sp, response = NA, covariates, offset, tag = "obs") {
@@ -78,10 +89,11 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       nTime <- length(unique(time(sp)))
       fieldIndex <- inla.spde.make.index("spatial", n.spde = self$getSPDE()$n.spde, n.group = nTime)
       effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(c(fieldIndex))
-      mesh <- self$getSpatialMesh()$getINLAMesh()
-      repMeshLocations <- cbind(rep(mesh$loc[,1], nTime), rep(mesh$loc[,2], nTime))
-      timeIndex <- rep(1:nTime, each = nrow(meshLocations))
-      AList <- list(INLA::inla.spde.make.A(mesh, loc = repMeshLocations, group = timeIndex, n.group = nTime))
+      mesh <- self$getSpatialMesh()
+      nodes <- coordinates(mesh$getScaledMeshNodes())
+      repMeshLocations <- cbind(rep(nodes[,1], nTime), rep(nodes[,2], nTime))
+      timeIndex <- rep(1:nTime, each = nrow(nodes))
+      AList <- list(INLA::inla.spde.make.A(mesh$getINLAMesh(), loc = repMeshLocations, group = timeIndex, n.group = nTime))
 
       self$addStack(data = dataList, A = AList, effects = effects, tag = tag)
       
