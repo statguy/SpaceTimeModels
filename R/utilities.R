@@ -15,7 +15,7 @@ getCovariateNames = function(covariatesModel, covariates) {
   x <- if (missing(covariates) || is.null(covariates)) terms(covariatesModel)
   else terms(covariatesModel, data = covariates)
   y <- attr(x, "term.labels")
-  if (any(str_detect(y, "`")))
+  if (any(stringr::str_detect(y, "`")))
     stop("Covariate names with backticks unsupported.")
   return(y)
 }
