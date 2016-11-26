@@ -40,6 +40,8 @@ SpaceModel <- R6::R6Class(
     setLikelihood = function(likelihood) {
       if (missing(likelihood))
         stop("Required argument 'likelihood' missing.")
+      if (!inherits(likelihood, "character"))
+        stop("Argument 'likelihood' must be of type 'character.")
       self$likelihood <- likelihood
       return(invisible(self))
     },
@@ -47,6 +49,8 @@ SpaceModel <- R6::R6Class(
     setLinkFunction = function(link) {
       if (missing(link))
         stop("Required argument 'link' missing.")
+      if (!inherits(link, "character"))
+        stop("Argument 'link' must be of type 'character.")
       self$link <- link
       return(invisible(self))
     },
@@ -90,6 +94,19 @@ SpaceModel <- R6::R6Class(
       data$spatialMean <- self$getResult()$summary.random$spatial$mean
       data$spatialSd <- self$getResult()$summary.random$spatial$sd
       return(as.data.frame(data))
+    },
+    
+    getSpatialVariationRaster = function(variable = "mean", template = self$getSpatialMesh()$getKnots(), height = 100, width = 100, crs = self$getSpatialMesh()$getCRS(), tag = "pred") {
+      predictions <- as.matrix(self$getFittedResponse(variable = variable, tag = tag))
+      r <- SpaceTimeModels::SpaceTimeRaster$new(x = template, height = height, width = width, crs = crs)
+      r$project(self$getSpatialMesh(), predictions)
+      return(r)
+    },
+    
+    plotSpatialVariation = function(variable = "mean", xlim, ylim, dims, tag = "pred") {
+      str <- self$getSpatialVariationRaster(variable = variable, tag = tag)
+      p <- rasterVis::gplot(str$getLayer(1)) + ggplot2::geom_raster(aes(fill = value))
+      return(p)
     }
   )
 )
