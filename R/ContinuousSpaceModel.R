@@ -199,8 +199,9 @@ ContinuousSpaceModel <- R6::R6Class(
       fieldIndex <- INLA::inla.spde.make.index("spatial", n.spde = self$getSPDE()$n.spde)
 
       effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(c(fieldIndex))
-      mesh <- self$getSpatialMesh()$getINLAMesh()
-      AList <- list(INLA::inla.spde.make.A(mesh, loc = mesh$loc))
+      mesh <- self$getSpatialMesh()
+      nodes <- coordinates(mesh$getScaledMeshNodes())
+      AList <- list(INLA::inla.spde.make.A(mesh$getINLAMesh(), loc = nodes))
       
       self$addStack(data = dataList, A = AList, effects = effects, tag = tag)
       
