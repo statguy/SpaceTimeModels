@@ -19,7 +19,6 @@ Depends:
     plyr,
     reshape2,
     tidyverse,
-    ggplot2,
     rasterVis
 URL: https://github.com/statguy/SpaceTimeModels
 LazyLoad: yes
