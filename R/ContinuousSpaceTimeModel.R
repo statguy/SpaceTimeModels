@@ -8,5 +8,11 @@ ContinuousSpaceTimeModel <- R6::R6Class(
   lock_objects = FALSE,
   inherit = SpaceTimeModels::ContinuousSpaceModel,
   public = list(
+    temporalModel = NULL,
+    temporalPrior = NULL,
+    
+    setTemporalPrior = function(model, prior) {
+      stop("Unimplemented abstract method 'setTemporalPrior'.")
+    }
   )
 )
