@@ -16,15 +16,13 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       self$temporalModel <- "ar1"
     },
     
-    setTemporalPrior = function(prior) {
-      self$temporalModel = prior$model
-      self$temporalPrior <- list(theta = list(param = c(prior$mean, prior$sd), initial = prior$initial))
+    setTemporalPrior = function(model, prior) {
+      self$temporalModel <- model
+      self$temporalPrior <- prior
       return(invisible(self))
     },
     
     getRandomEffectTerm = function() {
-      #if (is.null(self$temporalModel)) self$temporalModel <- "ar1"
-      # TODO: substitute with actual values
       if (is.null(self$temporalPrior))
         return("f(spatial, model=spde, group=spatial.group, control.group=list(model=self$temporalModel))")
       else
