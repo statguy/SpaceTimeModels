@@ -16,11 +16,9 @@ Depends:
     sp,
     spacetime,
     raster,
-    tidyr,
     plyr,
-    dplyr,
-    stringr,
     reshape2,
+    tidyverse,
     ggplot2,
     rasterVis
 URL: https://github.com/statguy/SpaceTimeModels
