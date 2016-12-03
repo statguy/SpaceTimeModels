@@ -122,28 +122,6 @@ ContinuousSpaceModel <- R6::R6Class(
     
     getInterceptPrecision = function() return(self$interceptPrecision),
     
-    DEPRECATED_setSpatialPrior = function(range, rangeFactor = 5) {
-      if (is.null(self$getSpatialMesh()))
-        stop("Mesh must be defined first.")
-      
-      sigma0 <- 1
-      range0 <- if (missing(range)) {
-        size <- min(c(diff(base::range(self$getSpatialMesh()$getINLAMesh()$loc[,1])),
-                      diff(base::range(self$getSpatialMesh()$getINLAMesh()$loc[,2]))))
-        size / rangeFactor
-      }
-      else range0 <- range
-      kappa0 <- sqrt(8) / range0
-      tau0 <- 1 / (sqrt(4 * pi) * kappa0 * sigma0)
-      self$spde <- inla.spde2.matern(mesh = self$getSpatialMesh()$getINLAMesh(),
-                                     B.tau=cbind(log(tau0), -1, +1),
-                                     B.kappa=cbind(log(kappa0), 0, -1),
-                                     theta.prior.mean = c(0, 0),
-                                     theta.prior.prec = c(0.1, 1))
-      
-      return(invisible(self))        
-    },
-    
     addObservationStack = function(sp, response, covariates, offset, tag = "obs") {
       # TODO: allow defining link function
       
@@ -252,9 +230,9 @@ ContinuousSpaceModel <- R6::R6Class(
       INLA::inla.stack.LHS(self$getFullStack())$response[index]
     },
 
-    getFittedResponse = function(variable = "mean", tag = "obs") {
+    getFittedResponse = function(variable = "mean", withOffset = FALSE, tag = "obs") {
       index <- self$getIndex(tag)
-      offset <- self$getOffset(tag)
+      offset <- ifelse(withOffset, self$getOffset(tag), 1)
       return(self$getResult()$summary.fitted.values[index, variable] * offset)
     },
     

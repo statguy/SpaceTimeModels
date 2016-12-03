@@ -17,6 +17,8 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     },
     
     setTemporalPrior = function(model, prior) {
+      if (missing(model) || missing(prior))
+        stop("Required arguments 'model' and 'prior' missing.")
       self$temporalModel <- model
       self$temporalPrior <- prior
       return(invisible(self))
@@ -104,9 +106,9 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       summary(self$result)
     },
 
-    summaryTemporalVariation = function(variable = "mean", timeIndex, tag = "obs") {
+    summaryTemporalVariation = function(variable = "mean", timeIndex, summariseFun = sum, tag = "obs", ...) {
       observed <- self$getObserved(tag = tag)
-      fitted <- self$getFittedResponse(variable = variable, tag = tag)
+      fitted <- self$getFittedResponse(variable = variable, withOffset = TRUE, tag = tag)
       
       timeIndex <- if (missing(timeIndex)) {
         index <- self$getIndex(tag = tag)
@@ -114,9 +116,10 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       }
       else timeIndex
       
-      x <- data.frame(time = timeIndex, observed = observed, fitted = fitted)
+      offset <- self$getOffset(tag)
+      x <- data.frame(time = timeIndex, observed = observed, fitted = fitted, offset = offset)
       df <- x %>% dplyr::group_by(time) %>% 
-        dplyr::summarise(observed = sum(observed, na.rm = T), fitted = sum(fitted, na.rm = T))
+        dplyr::summarise(observed = summariseFun(observed, ...), fitted = summariseFun(fitted, ...))
       return(df)
     },
     
