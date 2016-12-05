@@ -114,6 +114,15 @@ ContinuousSpaceModel <- R6::R6Class(
       self$setSPDE(spde)
       return(invisible(self))
     },
+
+    setSpatialPriorDefault = function() {
+      mesh <- self$getSpatialMesh()
+      if (is.null(mesh))
+        stop("Mesh must be defined first.")
+      spde <- INLA::inla.spde2.matern(mesh = mesh$getINLAMesh())
+      self$setSPDE(spde)
+      return(invisible(self))
+    },
     
     setInterceptPrecision = function(prec = 0.0) {
       self$interceptPrecision <- prec
