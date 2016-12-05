@@ -47,6 +47,7 @@ formula <- ~ A + UTMX + UTMY + WS + TEMP + HMIX + PREC + EMI
 model <- SpaceTimeModels::ContinuousSpaceDiscreteTimeModel$new()
 model$setSpatialMesh(mesh)
 model$setSpatialPrior()
+#model$setSpatialPriorDefault(sigma = 1, rho = 30)
 #model$setTemporalPrior(model = "rw2", cyclic = TRUE)
 model$setTemporalPrior(model = "ar1")
 #model$setSmoothingModel()

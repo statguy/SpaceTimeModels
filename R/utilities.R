@@ -101,6 +101,25 @@ theme_raster <- function(base_size = 12, base_family = "", ...) {
     )
 }
 
+# Taken from http://www.math.ntnu.no/inla/r-inla.org/papers/jss/lindgren.pdf
+#' @export local.inla.spde2.matern.default
+#' @keywords internal
+local.inla.spde2.matern.default <- function(mesh, sigma0, range0) {
+  #sigma0 = 1
+  #if (missing(range0)) {
+  #  size = min(c(diff(range(mesh$loc[, 1])), diff(range(mesh$loc[, 2]))))
+  #  range0 = size / 5
+  #}
+  kappa0 = sqrt(8) / range0
+  tau0 = 1 / (sqrt(4 * pi) * kappa0 * sigma0)
+  spde = inla.spde2.matern(mesh,
+                           B.tau = cbind(log(tau0), -1, +1),
+                           B.kappa = cbind(log(kappa0), 0, -1),
+                           theta.prior.mean = c(0, 0),
+                           theta.prior.prec = c(0.1, 1) )
+  return(invisible(spde))
+}
+
 # Taken from https://groups.google.com/forum/#!topic/r-inla-discussion-group/cPU0iJA2UqY
 #' @export local.inla.spde2.matern.new
 #' @keywords internal

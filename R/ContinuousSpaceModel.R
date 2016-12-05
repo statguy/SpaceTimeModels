@@ -115,11 +115,12 @@ ContinuousSpaceModel <- R6::R6Class(
       return(invisible(self))
     },
 
-    setSpatialPriorDefault = function() {
+    setSpatialPriorDefault = function(rho, sigma = 1) {
       mesh <- self$getSpatialMesh()
       if (is.null(mesh))
         stop("Mesh must be defined first.")
-      spde <- INLA::inla.spde2.matern(mesh = mesh$getINLAMesh())
+      rho <- ifelse(missing(rho), mesh$getSize() / 5, rho)
+      spde <- SpaceTimeModels::local.inla.spde2.matern.default(mesh = mesh$getINLAMesh(), range0 = rho, sigma0 = sigma)
       self$setSPDE(spde)
       return(invisible(self))
     },
