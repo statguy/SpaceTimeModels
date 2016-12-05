@@ -12,7 +12,11 @@ ContinuousSpaceTimeModel <- R6::R6Class(
     temporalPrior = NULL,
     
     setTemporalPrior = function(model, prior) {
-      stop("Unimplemented abstract method 'setTemporalPrior'.")
+      if (missing(model) && missing(prior))
+        stop("Required arguments 'model' and/or 'prior' missing.")
+      if (!missing(model)) self$temporalModel <- model
+      if (!missing(prior)) self$temporalPrior <- prior
+      return(invisible(self))
     }
   )
 )

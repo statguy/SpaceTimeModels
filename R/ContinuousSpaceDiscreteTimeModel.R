@@ -15,15 +15,7 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     initialize = function() {
       self$temporalModel <- "ar1"
     },
-    
-    setTemporalPrior = function(model, prior) {
-      if (missing(model) || missing(prior))
-        stop("Required arguments 'model' and 'prior' missing.")
-      self$temporalModel <- model
-      self$temporalPrior <- prior
-      return(invisible(self))
-    },
-    
+ 
     getRandomEffectTerm = function() {
       if (is.null(self$temporalPrior))
         return("f(spatial, model=spde, group=spatial.group, control.group=list(model=self$temporalModel))")
