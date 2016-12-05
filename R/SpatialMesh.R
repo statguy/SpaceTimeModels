@@ -21,7 +21,7 @@ SpatialMesh <- R6::R6Class(
         stop("Argument 'locDomain' must be of class SpatialPoints.")
       
       meshCoordinates <- self$getMeshKnots()
-      locDomain <- SpaceTimeModels::nullScale(sp::coordinates(locDomain), self$getScale())
+      locDomain <- if (!is.null(locDomain)) SpaceTimeModels::nullScale(sp::coordinates(locDomain), self$getScale()) else NULL
       self$mesh <- INLA::inla.mesh.2d(loc = meshCoordinates,
                                       loc.domain = locDomain,
                                       cutoff = SpaceTimeModels::nullScale(cutoff, self$getScale()),
