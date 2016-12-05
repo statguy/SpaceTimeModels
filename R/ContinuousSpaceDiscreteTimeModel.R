@@ -17,10 +17,13 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     },
  
     getRandomEffectTerm = function() {
-      if (is.null(self$temporalPrior))
-        return("f(spatial, model=spde, group=spatial.group, control.group=list(model=self$temporalModel))")
+      model <- if (is.null(self$temporalPrior))
+        "f(spatial, model=spde, group=spatial.group, control.group=c(list(model=self$temporalModel)"
       else
-        return("f(spatial, model=spde, group=spatial.group, control.group=list(model=self$temporalModel, hyper=self$temporalPrior))")
+        "f(spatial, model=spde, group=spatial.group, control.group=c(list(model=self$temporalModel, hyper=self$temporalPrior)"
+      if (!is.null(self$temporalParams)) model <- paste0(model, ", self$temporalParams")
+      model <- paste0(model, "))")
+      return(model)
     },
     
     addObservationStack = function(sp, response = NA, covariates, offset, tag = "obs") {

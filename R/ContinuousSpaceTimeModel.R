@@ -10,12 +10,14 @@ ContinuousSpaceTimeModel <- R6::R6Class(
   public = list(
     temporalModel = NULL,
     temporalPrior = NULL,
+    temporalParams = NULL,
     
-    setTemporalPrior = function(model, prior) {
+    setTemporalPrior = function(model, prior, ...) {
       if (missing(model) && missing(prior))
         stop("Required arguments 'model' and/or 'prior' missing.")
       if (!missing(model)) self$temporalModel <- model
       if (!missing(prior)) self$temporalPrior <- prior
+      if (!missing(...)) self$temporalParams <- list(...)
       return(invisible(self))
     }
   )

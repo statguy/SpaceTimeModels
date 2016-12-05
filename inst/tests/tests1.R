@@ -47,6 +47,8 @@ formula <- ~ A + UTMX + UTMY + WS + TEMP + HMIX + PREC + EMI
 model <- SpaceTimeModels::ContinuousSpaceDiscreteTimeModel$new()
 model$setSpatialMesh(mesh)
 model$setSpatialPrior()
+#model$setTemporalPrior(model = "rw2", cyclic = TRUE)
+model$setTemporalPrior(model = "ar1")
 #model$setSmoothingModel()
 model$setCovariatesModel(formula, obs@data)
 model$setLikelihood("gaussian")
