@@ -84,12 +84,8 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       nTime <- length(unique(time(sp)))
       fieldIndex <- inla.spde.make.index("spatial", n.spde = self$getSPDE()$n.spde, n.group = nTime)
       effects <- if (self$hasIntercept()) list(c(fieldIndex, list(intercept = 1))) else list(c(fieldIndex))
-      mesh <- self$getSpatialMesh()
-      nodes <- coordinates(mesh$getScaledMeshNodes())
-      repMeshLocations <- cbind(rep(nodes[,1], nTime), rep(nodes[,2], nTime))
-      timeIndex <- rep(1:nTime, each = nrow(nodes))
-      AList <- list(INLA::inla.spde.make.A(mesh$getINLAMesh(), loc = repMeshLocations, group = timeIndex, n.group = nTime))
-
+      AList <- list(1)
+      
       self$addStack(data = dataList, A = AList, effects = effects, tag = tag)
       
       return(invisible(self))
