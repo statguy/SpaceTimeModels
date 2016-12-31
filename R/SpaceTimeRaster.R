@@ -46,17 +46,17 @@ SpaceTimeRaster <- R6::R6Class(
       return(invisible(self))  
     },
     
-    project = function(mesh, predictions, timeLabels) {
+    project = function(mesh, predictions, timeLabels, scale = 1) {
       if (missing(mesh)) stop("Required parameter 'mesh' missing.")
       if (missing(predictions)) stop("Required parameter 'predictions' missing.")
       
       inlaMesh <- if (inherits(mesh, "Mesh")) mesh$getINLAMesh()
-      else stop("Parameter 'mesh' must be of type 'SpaceTimeModels::Mesh'.")
-      #else if (inherits(mesh, "inla.mesh")) mesh
-      #else stop("Parameter 'mesh' must be of type 'SpaceTimeModels::Mesh' or 'INLA::inla.mesh'.")
+      #else stop("Parameter 'mesh' must be of type 'SpaceTimeModels::Mesh'.")
+      else if (inherits(mesh, "inla.mesh")) mesh
+      else stop("Parameter 'mesh' must be of type 'SpaceTimeModels::Mesh' or 'INLA::inla.mesh'.")
       
-      #scale <- ifelse(inherits(mesh, "Mesh"), 1 / mesh$getScale(), 1)
-      scale <- 1 / mesh$getScale()
+      scale <- ifelse(inherits(mesh, "Mesh"), 1 / mesh$getScale(), scale)
+      #scale <- 1 / mesh$getScale()
       projector <- INLA::inla.mesh.projector(inlaMesh,
                                              dims = c(raster::ncol(self$template), raster::nrow(self$template)),
                                              xlim = c(raster::xmin(self$template), raster::xmax(self$template)) * scale,
