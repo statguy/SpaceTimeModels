@@ -77,8 +77,8 @@ SpaceTimeRaster <- R6::R6Class(
     },
     
     getColorBreaks = function(n = 6) {
-      vmin <- min(raster::minValue(self$layers))
-      vmax <- max(raster::maxValue(self$layers))
+      vmin <- min(raster::minValue(self$layers), na.rm = TRUE)
+      vmax <- max(raster::maxValue(self$layers), na.rm = TRUE)
       return(seq(vmin, vmax, length.out = n))
     }
   )
