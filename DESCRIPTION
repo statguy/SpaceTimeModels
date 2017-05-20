@@ -2,8 +2,8 @@ Package: SpaceTimeModels
 Type: Package
 Title: An interface for fitting parametric spatial and spatio-temporal models
     with INLA
-Version: 0.1.4
-Date: 2016-10-15
+Version: 0.1.5
+Date: 2017-05-20
 Author: Jussi Jousimo
 Maintainer: Jussi Jousimo <jvj@iki.fi>
 Description: An interface for fitting parametric spatial and spatio-temporal
@@ -31,5 +31,6 @@ Collate:
     'ContinuousSpaceModel.R'
     'ContinuousSpaceTimeModel.R'
     'ContinuousSpaceDiscreteTimeModel.R'
+    'ReplicatedContinuousSpaceModel.R'
     'SpaceTimeRaster.R'
 RoxygenNote: 5.0.1

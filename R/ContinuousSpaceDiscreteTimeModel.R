@@ -1,5 +1,5 @@
 #' @title Continuous space, discrete time model
-#' @description Building and estimating discrete time, continuous space models.
+#' @description Continuous space and discrete time model.
 #' @references Lindgren, F. & Rue, H. (2015). Bayesian Spatial Modelling with R-INLA. Journal of Statistical Software, 63(19).
 #' @usage NULL
 #' @format NULL
@@ -27,8 +27,6 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
     },
     
     addObservationStack = function(sp, response = NA, covariates, offset, tag = "obs") {
-      # TODO: allow defining link function
-      
       if (missing(sp))
         stop("Required argument 'sp' missing.")
       if (!inherits(sp, "STI"))
@@ -91,6 +89,10 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       return(invisible(self))
     },
     
+    addValidationStack = function(sp, index, covariates, offset, tag = "val") {
+      self$addObservationStack(sp = sp, index = index, response = NA, covariates = covariates, offset = offset, tag = tag)
+    },
+    
     summary = function() {
       if (is.null(self$result))
         stop("The model has not been estimated.")
@@ -131,12 +133,12 @@ ContinuousSpaceDiscreteTimeModel <- R6::R6Class(
       r <- SpaceTimeModels::SpaceTimeRaster$new(x = template, height = height, width = width, crs = crs)
       r$project(self$getSpatialMesh(), predictions, timeLabels = timeLabels)
       return(r)
-    },
-    
-    plotSpatialVariation = function(variable = "mean", timeIndex, xlim, ylim, dims, tag = "pred") {
-      str <- self$getSpatialVariationRaster(variable = variable, timeIndex = timeIndex, tag = tag)
-      p <- rasterVis::gplot(str$getLayer(1)) + ggplot2::geom_raster(aes(fill = value))
-      return(p)
     }
+    
+    #plotSpatialVariation = function(variable = "mean", timeIndex, height, width, tag = "pred") {
+    #  str <- self$getSpatialVariationRaster(variable = variable, timeIndex = timeIndex, height = height, width = width, tag = tag)
+    #  p <- rasterVis::gplot(str$getLayer(1)) + ggplot2::geom_raster(aes(fill = value))
+    #  return(p)
+    #}
   )
 )
